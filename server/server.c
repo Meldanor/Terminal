@@ -28,6 +28,7 @@
 #include <netinet/in.h>
 
 #include "server.h"
+#include "connectedClient.h"
 #include "../network/network.h"
 
 int serverSocket;
@@ -142,11 +143,31 @@ void serverLoop(void) {
     stopServer(EXIT_SUCCESS);
 }
 
-#define OUT_BUFFER_SIZE 4096
-#define IN_BUFFER_SIZE 4096
+int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
+    struct connectedClient *client;
+    client = malloc(sizeof (struct connectedClient));
+    // not enought memory
+    if (client == NULL) { 
+        perror("Can't allocate memory for the connectedClient struct!\n");
+        return EXIT_FAILURE;
+    }
+    pthread_t thread;
+    int result = 0;
+    result = pthread_create( &thread, NULL, (&(handleClient)(struct *connectedClient)), client);
+    if (result != 0) {
+        perror("Can't create new thread for client!\n");
+        return EXIT_FAILURE;
+    }
 
-void handleClient(int clientSocket, struct sockaddr_in *client) {
+    createClient(client, clientSocket, thread, clientInformation);
+    return EXIT_SUCCESS;
+}
 
+//#define OUT_BUFFER_SIZE 4096
+//#define IN_BUFFER_SIZE 4096
+
+void handleClient(struct connectedClient *client) {
+/*
     // TODO: ONLY ACCEPT A MAXIMUM
     clientSockets[connectedClients++] = clientSocket;
     // TODO: Create a thread to handle the connected client
@@ -179,6 +200,7 @@ void handleClient(int clientSocket, struct sockaddr_in *client) {
     // CLOSE CONNECTION
     close(clientSocket);
     clientSockets[--connectedClients] = 0;
+*/
 }
 
 void stopServer(int signal) {

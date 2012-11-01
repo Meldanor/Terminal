@@ -26,17 +26,18 @@
 #define OUT_BUFFER_SIZE 4096
 
 /* function to encapsulate the necessary multithreaded information */
-struct connectedClient *createClient(int clientSocket, pthread_t thread) {
+int createClient(struct connectedClient *createClient, int clientSocket, struct sockaddr_in *clientInformation, pthread_t thread) {
     struct connectedClient *client;
     client = malloc(sizeof (struct connectedClient));
     // not enought memory
     if (client == NULL) { 
         perror("Can't allocate memory for the connectedClient struct!\n");
-        return NULL;
+        return EXIT_FAILURE;
     }
     // assign values
     client->clientSocket = clientSocket;
     client->thread = thread;
+    client->clientInformation = clientInformation;
 
     // create buffer and assign values
     char *bufferPointer;
@@ -46,7 +47,7 @@ struct connectedClient *createClient(int clientSocket, pthread_t thread) {
     if (bufferPointer == NULL) {
         free(client);
         perror("Can't allocate memory for the terminalClient inBuffer!\n");
-        return NULL;   
+        return EXIT_FAILURE;
     }
     client->inBuffer = bufferPointer;
 
@@ -56,11 +57,11 @@ struct connectedClient *createClient(int clientSocket, pthread_t thread) {
         free(client->inBuffer);
         free(client);
         perror("Can't allocate memory for the terminalClient outBuffer!\n");
-        return NULL;
+        return EXIT_FAILURE;
     }
     client->outBuffer = bufferPointer;
 
-    return client;
+    return EXIT_SUCCESS;
 }
 
 /* Function to free memory and clear up the struct */

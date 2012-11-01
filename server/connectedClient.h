@@ -20,11 +20,12 @@
 
 struct connectedClient {
     int clientSocket;
+    struct sockaddr_in *clientInformation;
     pthread_t thread;
     char *inBuffer;
     char *outBuffer;
 };
 
-struct connectedClient *createClient(int clientSocket, pthread_t thread);
+int createClient(struct connectedClient *createClient, int clientSocket, struct sockaddr_in *clientInformation, pthread_t thread);
 
 void clearClient(struct connectedClient *client);
