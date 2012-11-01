@@ -16,7 +16,7 @@
  * along with Terminal.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "connectedClient.h"
+#include "clientData.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,18 +26,11 @@
 #define OUT_BUFFER_SIZE 4096
 
 /* function to encapsulate the necessary multithreaded information */
-int createClient(struct connectedClient *createClient, int clientSocket, struct sockaddr_in *clientInformation, pthread_t thread) {
-    struct connectedClient *client;
-    client = malloc(sizeof (struct connectedClient));
-    // not enought memory
-    if (client == NULL) { 
-        perror("Can't allocate memory for the connectedClient struct!\n");
-        return EXIT_FAILURE;
-    }
+int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *clientInformation, pthread_t *thread) {
     // assign values
-    client->clientSocket = clientSocket;
-    client->thread = thread;
-    client->clientInformation = clientInformation;
+    clientData->clientSocket = clientSocket;
+    clientData->thread = thread;
+    clientData->clientInformation = clientInformation;
 
     // create buffer and assign values
     char *bufferPointer;
@@ -45,39 +38,39 @@ int createClient(struct connectedClient *createClient, int clientSocket, struct 
     // in buffer
     bufferPointer = malloc(sizeof (char) * IN_BUFFER_SIZE);
     if (bufferPointer == NULL) {
-        free(client);
+        free(clientData);
         perror("Can't allocate memory for the terminalClient inBuffer!\n");
         return EXIT_FAILURE;
     }
-    client->inBuffer = bufferPointer;
+    clientData->inBuffer = bufferPointer;
 
     // out buffer
     bufferPointer = malloc(sizeof (char) * OUT_BUFFER_SIZE);
     if (bufferPointer == NULL) {
-        free(client->inBuffer);
-        free(client);
+        free(clientData->inBuffer);
+        free(clientData);
         perror("Can't allocate memory for the terminalClient outBuffer!\n");
         return EXIT_FAILURE;
     }
-    client->outBuffer = bufferPointer;
+    clientData->outBuffer = bufferPointer;
 
     return EXIT_SUCCESS;
 }
 
 /* Function to free memory and clear up the struct */
-void clearClient(struct connectedClient *client) {
+void clearClient(struct clientData *clientData) {
     // Nothing to do
-    if (client == NULL) {
+    if (clientData == NULL) {
         return;
     }
     // free inBuffer
-    if (client->inBuffer != NULL) {
-        free(client->inBuffer);
+    if (clientData->inBuffer != NULL) {
+        free(clientData->inBuffer);
     }
     // free outBuffer
-    if (client->outBuffer != NULL) {
-        free(client->outBuffer);
+    if (clientData->outBuffer != NULL) {
+        free(clientData->outBuffer);
     }   
     // free the struct itself
-    free(client);
+    free(clientData);
 }

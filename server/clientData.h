@@ -18,14 +18,14 @@
 
 #include <pthread.h>
 
-struct connectedClient {
+struct clientData {
     int clientSocket;
     struct sockaddr_in *clientInformation;
-    pthread_t thread;
+    pthread_t *thread;
     char *inBuffer;
     char *outBuffer;
 };
 
-int createClient(struct connectedClient *createClient, int clientSocket, struct sockaddr_in *clientInformation, pthread_t thread);
+int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *clientInformation, pthread_t *thread);
 
-void clearClient(struct connectedClient *client);
+void clearClient(struct clientData *clientData);

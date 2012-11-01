@@ -28,15 +28,16 @@
 #include <netinet/in.h>
 
 #include "server.h"
-#include "connectedClient.h"
+#include "clientData.h"
 #include "../network/network.h"
+#include <pthread.h>
 
 int serverSocket;
 bool serverIsRunning = true;
 
 // CURRENT CONNECTED CLIENTS
 int clientSockets[64];
-int connectedClients;
+int clientDatas;
 
 int main(int argc, char **args) {
 
@@ -136,41 +137,42 @@ void serverLoop(void) {
             perror("Can't accept a new client!\n");
             continue;
         }
+        // TODO: ONLY ACCEPT A MAXIMUM
         // HANDLE THE CLIENT
-        handleClient(clientSocket, &client);
+        addClient(clientSocket, &client);
     }
 
     stopServer(EXIT_SUCCESS);
 }
 
 int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
-    struct connectedClient *client;
-    client = malloc(sizeof (struct connectedClient));
+    struct clientData *clientData;
+    clientData = malloc(sizeof(struct clientData));
     // not enought memory
-    if (client == NULL) { 
-        perror("Can't allocate memory for the connectedClient struct!\n");
+    if (clientData == NULL) { 
+        perror("Can't allocate memory for the clientData struct!\n");
         return EXIT_FAILURE;
     }
-    pthread_t thread;
+    pthread_t *thread;
     int result = 0;
-    result = pthread_create( &thread, NULL, (&(handleClient)(struct *connectedClient)), client);
+    pthread_create(thread, NULL, &handleClient, clientData);
+    
     if (result != 0) {
         perror("Can't create new thread for client!\n");
         return EXIT_FAILURE;
     }
-
-    createClient(client, clientSocket, thread, clientInformation);
+    getClientData(clientData, clientSocket, clientInformation, thread);
+    
+    // TODO: Start thread 
     return EXIT_SUCCESS;
 }
 
-//#define OUT_BUFFER_SIZE 4096
-//#define IN_BUFFER_SIZE 4096
-
-void handleClient(struct connectedClient *client) {
+static void *handleClient(void *arg) {
+    struct clientData *clientData = (struct clientData *)(arg);
+    // TODO: Reimplement everything with new structure
 /*
-    // TODO: ONLY ACCEPT A MAXIMUM
-    clientSockets[connectedClients++] = clientSocket;
-    // TODO: Create a thread to handle the connected client
+
+    clientSockets[clientDatas++] = clientSocket;
     // BUFFER
     char outBuffer[OUT_BUFFER_SIZE];
     char inBuffer[IN_BUFFER_SIZE];
@@ -199,17 +201,18 @@ void handleClient(struct connectedClient *client) {
     }
     // CLOSE CONNECTION
     close(clientSocket);
-    clientSockets[--connectedClients] = 0;
+    clientSockets[--clientDatas] = 0;
 */
 }
 
 void stopServer(int signal) {
+    // TODO: Reimplement everything with new structure
     printf("Shutting down the server...\n");
     // FUNCTION TO CLEAN UP
-    printf("Close %d client sockets...\n", connectedClients);
+    printf("Close %d client sockets...\n", clientDatas);
     // CLOSE CLIENT SOCKETS 
     int i;
-    for (i = 0 ; i < connectedClients; ++i) {
+    for (i = 0 ; i < clientDatas; ++i) {
         close(clientSockets[i]);
     } 
     printf("Close server socket...\n");
