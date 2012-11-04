@@ -22,13 +22,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <regex.h>
+#include <time.h>
 
 /* Regex Pointer*/
 regex_t GET_REGEX;
 
 /* Compile regexes */
 bool init(void) {
-    int regRes = regcomp(&regex, "GET /\\S\\S* HTTP/1.0[\r\n]", 0);
+    int regRes = regcomp(&GET_REGEX, "GET /\\S\\S* HTTP/1.0[\r\n]", 0);
     if (regRes != 0) {
         fprintf(stderr, "Error while compiling GET Regex!\n");
         return false;
@@ -63,4 +64,42 @@ bool isValidGET(char *request, int length) {
         fprintf(stderr, "Regex match failed : %s \n", regexErrorBuffer);
         return false;
     }
+}
+
+void getFormattedTime(char *buffer, int bufferSize) {
+    // Get current time
+    time_t curTime = time(NULL);
+    // Format Time
+    // Format Example: Sun, 04 Nov 2012 22:32:58 CET
+    strftime(buffer, bufferSize, "Date: %a, %d %b %Y %H:%M:%S %Z", localtime(&curTime));
+}
+
+void GETResponseHead(char *headBuffer, char *contentType, int contentLength) {
+    // Clear buffer
+    memset(headBuffer,0, sizeof(headBuffer));
+
+    // Add head
+    strcat(headBuffer, "HTTP/1.0 200 OK\n");
+
+    // Add date
+    char date[64];
+    getFormattedTime(date, sizeof(date));
+    strcat(headBuffer, date);
+    strcat(headBuffer, "\n");
+
+    // Add Content Type
+    strcat(headBuffer, "Content-Type: ");
+    strcat(headBuffer, contentType);
+    strcat(headBuffer, "\n");
+
+    // Add Content Length
+    strcat(headBuffer, "Content-Length: ");
+    char contentLengthBuffer[32];
+    // Convert int to string(unsafe)
+    sprintf(contentLengthBuffer, "%d", contentLength);
+    strcat(headBuffer, contentLengthBuffer);
+    strcat(headBuffer, "\n");
+    
+    // Finish head information
+    strcat(headBuffer, "\n");
 }

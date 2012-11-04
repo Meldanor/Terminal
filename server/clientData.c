@@ -20,7 +20,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <pthread.h>
 
 #define IN_BUFFER_SIZE 4096
 #define OUT_BUFFER_SIZE 4096
