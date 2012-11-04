@@ -28,7 +28,7 @@ regex_t GET_REGEX;
 
 /* Compile regexes */
 bool init(void) {
-    int regRes = regcomp(&GET_REGEX, "GET /\\S\\S* HTTP/1.0", 0);
+    int regRes = regcomp(&regex, "GET /\\S\\S* HTTP/1.0[\r\n]", 0);
     if (regRes != 0) {
         fprintf(stderr, "Error while compiling GET Regex!\n");
         return false;
