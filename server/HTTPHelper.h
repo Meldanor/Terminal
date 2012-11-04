@@ -15,7 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with Terminal.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <stdbool.h>
 
-bool isGETRequest(char *signs, int length);
+bool initi(void);
 
-bool isValidGET(char *signs, int length);
+bool isGETRequest(char *request, int length);
+
+bool isValidGET(char *request, int length);

@@ -20,23 +20,47 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
+#include <regex.h>
+
+/* Regex Pointer*/
+regex_t GET_REGEX;
+
+/* Compile regexes */
+bool init(void) {
+    int regRes = regcomp(&GET_REGEX, "GET /\\S\\S* HTTP/1.0", 0);
+    if (regRes != 0) {
+        fprintf(stderr, "Error while compiling GET Regex!\n");
+        return false;
+    }
+}
+
+// Error buffer
+char regexErrorBuffer[64];
+
+/* --- GET FUNCTION --- */
 
 #define GET_HEAD "GET "
 
-bool isGETRequest(char *signs, int length) {
-    return length >= 4 && strncmp(signs, GET_HEAD, 4) == 0;
+bool isGETRequest(char *request, int length) {
+    // Must start with a GET
+    return length >= 4 && strncmp(request, GET_HEAD, 4) == 0;
 }
 
-bool isValidGET(char *signs, int length) {
-    // Wrong head    
-    if (!isGETRequest(signs, length))
+bool isValidGET(char *request, int length) {
+    int regRes = 0;
+    // Execute the regex
+    regRes = regexec(&GET_REGEX, request, 0, NULL, 0);
+    // Is a GET request
+    if (regRes)
+        return true;
+    // Is not a GET request
+    if (regRes == REG_NOMATCH)
         return false;
-    //TODO: Check if file attribute is given and protocoll is given and terminated by \r\n
-    char *p = signs + 4;
-    // File attribute is wrong
-    if (strncmp(p, "/", 1) != 0) {
+    // Something failed
+    else {
+        regerror(regRes, &GET_REGEX, regexErrorBuffer, sizeof(regexErrorBuffer));
+        fprintf(stderr, "Regex match failed : %s \n", regexErrorBuffer);
         return false;
     }
 }
