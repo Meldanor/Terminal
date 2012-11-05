@@ -16,8 +16,6 @@
  * along with Terminal.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-int createConnection(char *address, int port);
+#include <stdbool.h>
 
-void clientLoop(void);
-
-void stopClient(int signal);
+bool isInteger(char *string);
