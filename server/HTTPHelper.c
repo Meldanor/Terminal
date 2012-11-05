@@ -39,7 +39,7 @@ bool init(void) {
 // Error buffer
 char regexErrorBuffer[64];
 
-/* --- GET FUNCTION --- */
+/* --- Functions for the GET Request --- */
 
 #define GET_HEAD "GET "
 
@@ -64,6 +64,25 @@ bool isValidGET(char *request, int length) {
         fprintf(stderr, "Regex match failed : %s \n", regexErrorBuffer);
         return false;
     }
+}
+
+int extractFileFromGET(char *fileBuffer, char *request) {
+    // Start of the file part
+    char *start = request + 4;
+
+    // Search for the end of the file part
+    char *end = NULL;
+    end = strchr(start, ' ');
+    // No SPACE found (impossible)
+    if (end == NULL)
+        return EXIT_FAILURE;
+    // Copy file part from request to fileBuffer
+    int size = (end - start) - 1;
+    for(; size >= 0; --size) {
+        fileBuffer[size] = start[size];
+    }
+
+    return EXIT_SUCCESS;
 }
 
 void getFormattedTime(char *buffer, int bufferSize) {

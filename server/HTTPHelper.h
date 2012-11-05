@@ -23,6 +23,10 @@ bool isGETRequest(char *request, int length);
 
 bool isValidGET(char *request, int length);
 
+int extractFileFromGET(char *fileBuffer, char *request);
+
 void getFormattedTime(char *buffer, int bufferSize);
 
 void GETResponseHead(char *headBuffer, char *contentType, int contentLength);
+
+
