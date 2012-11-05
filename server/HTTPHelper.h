@@ -29,4 +29,8 @@ void getFormattedTime(char *buffer, int bufferSize);
 
 void GETResponseHead(char *headBuffer, char *contentType, int contentLength);
 
+void Error400(char *buffer);
 
+void Error404(char *buffer);
+
+void Error501(char *buffer);

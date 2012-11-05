@@ -122,3 +122,20 @@ void GETResponseHead(char *headBuffer, char *contentType, int contentLength) {
     // Finish head information
     strcat(headBuffer, "\n");
 }
+
+/* ---- Misc functions ---- */
+
+void Error400(char *buffer) {
+    memset(buffer, 0, sizeof(buffer));
+    strcat(buffer, "HTTP/1.0 400 Bad Request\n\n");
+}
+
+void Error404(char *buffer) {
+    memset(buffer, 0, sizeof(buffer));
+    strcat(buffer, "HTTP/1.0 404 Not found\n\n");
+}
+
+void Error501(char *buffer) {
+    memset(buffer, 0, sizeof(buffer));
+    strcat(buffer, "HTTP/1.0 501 Not Implemented\n\n");
+}
