@@ -58,13 +58,12 @@ int main(int argc, char **args) {
         cur = args[i];
         // READ PORT
         if (strcmp(cur, "-p") == 0) {
-            // CONVERT THE STRING TO AN INTEGER
-            // TODO: Use a method that checqks if it is an valid number
-            port = strtol(args[++i], (char **) NULL, 10);
-            if (port == LONG_MIN || port == LONG_MAX) {
-                printf("Port %s is an invalid number!\n", args[i]);
+            // Check if the user has written a number
+            if (!isNumber(args[++i])) {
+                printf("Port '%s' is an invalid number!\n", args[i]);
                 return EXIT_FAILURE;
-            }
+            }            
+            port = strtol(args[i], (char **) NULL, 10);
             // DISALLOW KERNEL PORTS
             if (port <= 1024) {
                 printf("Port %ld must be higher than 1024!\n", port);
