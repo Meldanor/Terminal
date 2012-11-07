@@ -110,7 +110,7 @@ int createConnection(int port) {
     // LISTEN TO PORT
     server_addr.sin_port = htons( port );
     // BIND THE SOCKET TO THE PARAMETER
-    int result = bind(serverSocket, (struct sockaddr*)(&server_addr), sizeof(struct sockaddr));
+    int result = bind(serverSocket, (struct sockaddr*)(&server_addr), sizeof(struct sockaddr_in));
     if (result < 0 ) {
         perror("Unable to bind server to socket!\n");
         return EXIT_FAILURE;

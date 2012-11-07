@@ -16,7 +16,7 @@
  * along with Terminal.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define SERVER_QUEUE_SIZE 8
+#define SERVER_QUEUE_SIZE 4
 
 int createConnection(int port);
 
