@@ -16,15 +16,28 @@
  * along with Terminal.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define SOCKET_FAMILY AF_INET
-#define SOCKET_TYPE SOCK_STREAM
-#define SOCKET_PROTOCOL 0
+#include <stdbool.h>
 
-#include <stdio.h>
-#include <netinet/in.h>
+struct Node {
+    void *value;
+    struct Node *next;
+    struct Node *prev;
+};
 
-int transferFile(FILE *source, int clientSocket);
+struct LinkedList {
+    struct Node *first;
+    struct Node *last;
+    int size;
+};
 
-int createSocket(void);
+struct LinkedList *create(void);
 
-int getAddress(char *address, struct sockaddr_in *sockAddr);
+bool isEmpty(struct LinkedList *list);
+
+bool add(struct LinkedList *list, void *value);
+
+void *removeFirst(struct LinkedList *list);
+
+void *removeLast(struct LinkedList *list);
+
+void *removeElement(struct LinkedList *list, int index);

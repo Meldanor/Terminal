@@ -16,13 +16,11 @@
  * along with Terminal.  If not, see <http://www.gnu.org/licenses/>.
  */
  
-#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
