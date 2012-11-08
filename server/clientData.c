@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #define IN_BUFFER_SIZE 4096
 #define OUT_BUFFER_SIZE 4096
@@ -41,6 +42,7 @@ int getClientData(struct clientData *clientData, int clientSocket, struct sockad
         perror("Can't allocate memory for the terminalClient inBuffer!\n");
         return EXIT_FAILURE;
     }
+    memset(bufferPointer, 0, sizeof(bufferPointer));
     clientData->inBuffer = bufferPointer;
 
     // out buffer
@@ -51,6 +53,7 @@ int getClientData(struct clientData *clientData, int clientSocket, struct sockad
         perror("Can't allocate memory for the terminalClient outBuffer!\n");
         return EXIT_FAILURE;
     }
+    memset(bufferPointer, 0, sizeof(bufferPointer));
     clientData->outBuffer = bufferPointer;
 
     return EXIT_SUCCESS;

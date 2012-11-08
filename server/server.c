@@ -36,8 +36,8 @@ int serverSocket;
 bool serverIsRunning = true;
 
 // CURRENT CONNECTED CLIENTS
-int clientSockets[64];
-int clientDatas;
+struct clientData *clients[64];
+int clientCount;
 
 int main(int argc, char **args) {
 
@@ -161,58 +161,47 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
         return EXIT_FAILURE;
     }
     getClientData(clientData, clientSocket, clientInformation, thread);
-    
-    // TODO: Start thread 
+
+    // TODO: Need to rewrite! Incredible danger by multithreading system
+    clients[clientCount++] = clientData; 
+
     return EXIT_SUCCESS;
 }
 
 static void *handleClient(void *arg) {
-    struct clientData *clientData = (struct clientData *)(arg);
-    // TODO: Reimplement everything with new structure
-/*
 
-    clientSockets[clientDatas++] = clientSocket;
-    // BUFFER
-    char outBuffer[OUT_BUFFER_SIZE];
-    char inBuffer[IN_BUFFER_SIZE];
-    // CLEAR BUFFER (WE DONT WANT TO SEND TRASH)
-    memset(outBuffer, 0, OUT_BUFFER_SIZE);
-    memset(inBuffer, 0, IN_BUFFER_SIZE);
+    printf("Client connected");
+    struct clientData *clientData = (struct clientData *)(arg);
 
     int bytes_read;
-    int bytes_send;
-    
-    bytes_read = read(clientSocket, inBuffer, IN_BUFFER_SIZE - 1, 0);
-    
-    if (bytes_read == -1) {
-        perror("Something went wrong while receiving...\n");
-    }  
-    else {
-        printf("Received %d Bytes. %s", bytes_read, inBuffer);
-        memcpy(outBuffer, inBuffer, bytes_read);
-        bytes_send = write(clientSocket, outBuffer, bytes_read, 0);
-        if (bytes_send == -1 ) {
-            perror("Something went wrong while sending...\n");
-        }
-        else
-            printf("Send %d Bytes.    %s", bytes_send, outBuffer);
+    int bytes_sent;
 
+    // client loop
+    while (1) {
+        // Wait for input from client
+        bytes_read = read(clientData->clientSocket, clientData->inBuffer, sizeof(clientData->inBuffer));
     }
+    
     // CLOSE CONNECTION
-    close(clientSocket);
-    clientSockets[--clientDatas] = 0;
-*/
+    close(clientData->clientSocket);
+    clearClient(clientData);
+
+    // TODO: Need to rewrite! Incredible danger by multithreading system
+    clients[--clientCount] = NULL;
+
+    printf("Client disconnected");
 }
 
 void stopServer(int signal) {
     // TODO: Reimplement everything with new structure
     printf("Shutting down the server...\n");
     // FUNCTION TO CLEAN UP
-    printf("Close %d client sockets...\n", clientDatas);
+    printf("Close %d client sockets...\n", clientCount);
     // CLOSE CLIENT SOCKETS 
     int i;
-    for (i = 0 ; i < clientDatas; ++i) {
-        close(clientSockets[i]);
+    for (i = 0 ; i < clientCount; ++i) {
+        close(clients[i]->clientSocket);
+        clearClient(clients[i]);
     } 
     printf("Close server socket...\n");
     // CLOSE SERVER SOCKET    
