@@ -26,6 +26,6 @@ struct clientData {
     char *outBuffer;
 };
 
-int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *clientInformation, pthread_t *thread);
+int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *clientInformation);
 
 void clearClient(struct clientData *clientData);

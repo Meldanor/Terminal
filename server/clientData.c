@@ -26,10 +26,9 @@
 #define OUT_BUFFER_SIZE 4096
 
 /* function to encapsulate the necessary multithreaded information */
-int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *clientInformation, pthread_t *thread) {
+int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *clientInformation) {
     // assign values
     clientData->clientSocket = clientSocket;
-    clientData->thread = thread;
     clientData->clientInformation = clientInformation;
 
     // create buffer and assign values

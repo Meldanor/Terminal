@@ -152,15 +152,18 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
         perror("Can't allocate memory for the clientData struct!\n");
         return EXIT_FAILURE;
     }
+
     pthread_t *thread;
     int result = 0;
-    pthread_create(thread, NULL, &handleClient, clientData);
-    
+    // create data for the thread
+    getClientData(clientData, clientSocket, clientInformation);
+    // Create thread
+    result = pthread_create(thread, NULL, &handleClient, clientData);
     if (result != 0) {
         perror("Can't create new thread for client!\n");
         return EXIT_FAILURE;
     }
-    getClientData(clientData, clientSocket, clientInformation, thread);
+    clientData->thread = thread;
 
     // TODO: Need to rewrite! Incredible danger by multithreading system
     clients[clientCount++] = clientData; 
