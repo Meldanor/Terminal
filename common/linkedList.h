@@ -40,4 +40,4 @@ void *removeFirst(struct LinkedList *list);
 
 void *removeLast(struct LinkedList *list);
 
-void *removeElement(struct LinkedList *list, int index);
+bool removeElement(struct LinkedList *list, void *element);
