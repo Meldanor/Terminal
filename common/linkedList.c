@@ -31,6 +31,8 @@ struct LinkedList *create(void) {
     list->first = NULL;
     list->last = NULL;
     list->size = 0;
+
+    return list;
 }
 
 bool isEmpty(struct LinkedList *list) {
@@ -124,6 +126,53 @@ void *removeLast(struct LinkedList *list) {
     return value;
 }
 
+void *removeAt(struct LinkedList *list, int index) {
+    if (list == NULL) {
+        perror("LinkedList.c:removeAt : List is null!");
+        return NULL;
+    }
+    if (index < 0 || index >= list->size) {
+        perror("LinkedList.c:removeAt : Index outside the list!");
+        return NULL;    
+    }
+    if (index == 0)
+        return removeFirst(list);
+    if (index == list->size - 1)
+        return removeLast(list);
+    
+    struct Node *cur;
+    bool forward = (index < (list->size / 2 ));    
+    printf("Forwad: %s\n\n", forward ? "true" : "false");
+    if (forward) {
+        cur = list->first;        
+    }
+    else {
+        cur = list->last;
+        index = list->size - index;    
+    }
+    if (forward) {
+        while(index != 0) {
+            cur = cur->next;
+            --index;  
+        }
+    }
+    else {
+        while(index-- != 0) {
+            cur = cur->prev;
+            --index;
+        }
+    }
+    
+    if (cur->next != NULL)
+        cur->next->prev = cur->prev;
+    if (cur->prev != NULL)
+        cur->prev->next = cur->next;
+    void *value = cur->value;
+    free(cur);
+    list->size--;
+    return value;
+}
+
 bool removeElement(struct LinkedList *list, void *element) {
     if (list == NULL) {
         perror("LinkedList.c:removeElement : List is null!");
@@ -147,4 +196,47 @@ bool removeElement(struct LinkedList *list, void *element) {
         cur = cur->next;
     }    
     return false;
+}
+
+bool clearList(struct LinkedList *list) {
+    if (list == NULL) {
+        perror("LinkedList.c:clearList : List is null!");
+        return false;
+    }
+    if (isEmpty(list))
+        return true;
+    struct Node *cur = list->first;
+    struct Node *cur2 = list->first;
+    while (cur != NULL) {
+        cur2 = cur->next;
+        free(cur);
+        cur = cur2;
+    }
+
+    list->first = NULL;
+    list->last = NULL;
+    list->size = 0;
+    return true;
+}
+
+void **toArray(struct LinkedList *list) {
+    if (list == NULL) {
+        perror("LinkedList.c:toArray : List is null!");
+        return NULL;
+    }
+    if (isEmpty(list)) {                
+        return NULL;
+    }
+    void **ptr = malloc(sizeof(void*) * list->size);
+    if (ptr == NULL) {
+        perror("LinkedList.c:toArray : Can't allocate memory for array!");
+        return NULL;
+    }
+    struct Node *cur = list->first;
+    int i = 0;    
+    while (cur != NULL) {
+        ptr[i++] = cur->value;
+        cur = cur->next;
+    }
+    return ptr;
 }

@@ -100,7 +100,7 @@ int createConnection(int port) {
         perror("Unable to create socket!\n");
         return EXIT_FAILURE;
     }
-    
+
     // INIT PORT AND ACCEPT CONNECTIONS FROM ALL IPs
     struct sockaddr_in server_addr;
     // IP PROTOCOL
@@ -184,7 +184,7 @@ static void *handleClient(void *arg) {
         // Wait for input from client
         bytes_read = read(clientData->clientSocket, clientData->inBuffer, sizeof(clientData->inBuffer));
     }
-    
+
     // CLOSE CONNECTION
     close(clientData->clientSocket);
     clearClient(clientData);
