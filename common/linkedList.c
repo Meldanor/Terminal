@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
-struct LinkedList *create(void) {
+struct LinkedList *newLinkedList(void) {
     struct LinkedList *list = malloc(sizeof(struct LinkedList));
     if (list == NULL) {
         perror("Can't allocate memory for new LinkedList");

@@ -30,7 +30,7 @@ struct LinkedList {
     int size;
 };
 
-struct LinkedList *create(void);
+struct LinkedList *newLinkedList(void);
 
 bool isEmpty(struct LinkedList *list);
 
