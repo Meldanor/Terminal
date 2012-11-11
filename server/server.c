@@ -25,13 +25,17 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <netinet/in.h>
+
+#include <pthread.h>
 
 #include "server.h"
 #include "clientData.h"
 #include "../network/network.h"
 #include "../common/linkedList.h"
-#include <pthread.h>
+#include "HTTPHelper.h"
 
 int serverSocket;
 bool serverIsRunning = true;
@@ -191,6 +195,52 @@ void *handleClient(void *arg) {
             puts("No input from client");
             break;
         }
+        if (isGETRequest(clientData->inBuffer, bytes_read)) {
+            if (isValidGET(clientData->inBuffer, bytes_read)) {
+                char fileBuffer[255] = {0};
+                extractFileFromGET(fileBuffer, clientData->inBuffer);
+                FILE *file = fopen(fileBuffer, "r");
+                // Send Error 404 - File Not Found                
+                if (file == NULL) {
+                    Error404(clientData->outBuffer);
+                    bytes_sent = strlen(clientData->outBuffer);
+                    bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);                    
+                }
+                // Transfer file
+                else {
+                    // Get information about the file
+                    struct stat *fStat = (struct stat*)(malloc(sizeof(struct stat)));
+                    if (fStat == NULL) {
+                        perror("Can't allocate memory for file stat!");                                            
+                        break;
+                    }
+                    stat(fileBuffer, fStat);
+                    
+                    // Create response
+                    GETResponseHead(clientData->outBuffer, "content/data", fStat->st_size);
+                    // Send response
+                    bytes_sent = write(clientData->clientSocket, clientData->outBuffer, sizeof(clientData->outBuffer));
+                    transferFile(file, clientData->clientSocket);
+                    // Finish response
+                    write(clientData->clientSocket, "\n\n", strlen("\n\n"));
+                }
+            }
+            // Send Error 400 - Bad request
+            else {
+                Error400(clientData->outBuffer);
+                bytes_sent = strlen(clientData->outBuffer);
+                bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);
+            }
+        }
+        // Send Error 501 - Not implemented request
+        else {
+            Error501(clientData->outBuffer);
+            bytes_sent = strlen(clientData->outBuffer);
+            bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);
+        
+        }
+        memset(clientData->outBuffer, 0, sizeof(clientData->outBuffer));
+        memset(clientData->inBuffer, 0, sizeof(clientData->inBuffer));
     }
 
     // CLOSE CONNECTION

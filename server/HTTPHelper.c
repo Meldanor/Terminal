@@ -66,7 +66,7 @@ bool isValidGET(char *request, int length) {
     }
 }
 
-int extractFileFromGET(char *fileBuffer, char *request) {
+bool extractFileFromGET(char *fileBuffer, char *request) {
     // Start of the file part
     char *start = request + 4;
 
@@ -75,14 +75,14 @@ int extractFileFromGET(char *fileBuffer, char *request) {
     end = strchr(start, ' ');
     // No SPACE found (impossible)
     if (end == NULL)
-        return EXIT_FAILURE;
+        return false;
     // Copy file part from request to fileBuffer
     int size = (end - start) - 1;
     for(; size >= 0; --size) {
         fileBuffer[size] = start[size];
     }
 
-    return EXIT_SUCCESS;
+    return true;
 }
 
 void getFormattedTime(char *buffer, int bufferSize) {
