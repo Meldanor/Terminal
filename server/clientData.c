@@ -28,6 +28,7 @@
 /* function to encapsulate the necessary multithreaded information */
 int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *clientInformation) {
     // assign values
+    clientData->isConnected = true;
     clientData->clientSocket = clientSocket;
     clientData->clientInformation = clientInformation;
 

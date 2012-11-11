@@ -171,27 +171,35 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
     return EXIT_SUCCESS;
 }
 
-static void *handleClient(void *arg) {
+void *handleClient(void *arg) {
 
-    printf("Client connected");
+    puts("Client connected");
     struct clientData *clientData = (struct clientData *)(arg);
 
     int bytes_read;
     int bytes_sent;
 
     // client loop
-    while (1) {
+    while (clientData->isConnected) {
         // Wait for input from client
         bytes_read = read(clientData->clientSocket, clientData->inBuffer, sizeof(clientData->inBuffer));
+        if (bytes_read == -1) {
+            perror("Can't read from input stream! Disconnect the client !");
+            break;
+        }
+        else if (bytes_read = 0 ) {
+            puts("No input from client");
+            break;
+        }
     }
 
     // CLOSE CONNECTION
     close(clientData->clientSocket);
     clearClient(clientData);
 
-    remoteElement(clientList, clientData);
+    removeElement(clientList, clientData);
     free(clientData);
-    printf("Client disconnected");
+    puts("Client disconnected");
 }
 
 void stopServer(int signal) {

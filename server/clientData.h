@@ -17,9 +17,11 @@
  */
 
 #include <pthread.h>
+#include <stdbool.h>
 
 struct clientData {
     int clientSocket;
+    bool isConnected;
     struct sockaddr_in *clientInformation;
     pthread_t *thread;
     char *inBuffer;
