@@ -30,14 +30,14 @@
 #include "server.h"
 #include "clientData.h"
 #include "../network/network.h"
+#include "../common/linkedList.h"
 #include <pthread.h>
 
 int serverSocket;
 bool serverIsRunning = true;
 
 // CURRENT CONNECTED CLIENTS
-struct clientData *clients[64];
-int clientCount;
+static struct LinkedList *clientList;
 
 int main(int argc, char **args) {
 
@@ -76,6 +76,8 @@ int main(int argc, char **args) {
             return EXIT_FAILURE;
         }
     }
+
+    clientList = newLinkedList();
 
     printf("Trying to listen to the port %ld...\n", port);
     // CREATE A SOCKET THE SERVER WILL LISTEN TO
@@ -136,8 +138,7 @@ void serverLoop(void) {
             perror("Can't accept a new client!\n");
             continue;
         }
-        // TODO: ONLY ACCEPT A MAXIMUM
-        // HANDLE THE CLIENT
+        // Create new client and start handeling it
         addClient(clientSocket, &client);
     }
 
@@ -165,8 +166,7 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
     }
     clientData->thread = thread;
 
-    // TODO: Need to rewrite! Incredible danger by multithreading system
-    clients[clientCount++] = clientData; 
+    add(clientList, clientData);     
 
     return EXIT_SUCCESS;
 }
@@ -189,26 +189,31 @@ static void *handleClient(void *arg) {
     close(clientData->clientSocket);
     clearClient(clientData);
 
-    // TODO: Need to rewrite! Incredible danger by multithreading system
-    clients[--clientCount] = NULL;
-
+    remoteElement(clientList, clientData);
+    free(clientData);
     printf("Client disconnected");
 }
 
 void stopServer(int signal) {
-    // TODO: Reimplement everything with new structure
-    printf("Shutting down the server...\n");
-    // FUNCTION TO CLEAN UP
-    printf("Close %d client sockets...\n", clientCount);
+
+    puts("Start server shutdown!");
+    puts("Clean up server...");
+
+    printf("Close %d client sockets...\n", clientList->size);
     // CLOSE CLIENT SOCKETS 
     int i;
-    for (i = 0 ; i < clientCount; ++i) {
-        close(clients[i]->clientSocket);
-        clearClient(clients[i]);
-    } 
-    printf("Close server socket...\n");
+    struct clientData **clients = (struct clientData**)(toArray(clientList)); 
+    if (clients != NULL) {   
+        for (i = 0 ; i < clientList->size; ++i) {
+            close(clients[i]->clientSocket);
+            clearClient(clients[i]);
+        }
+    }
+    clearList(clientList);
+    // Closer server socket
+    puts("Close server socket...");
     // CLOSE SERVER SOCKET    
     close(serverSocket);
-    
+    puts("Finished server shutdown!");
     exit(signal);
 }
