@@ -28,12 +28,14 @@
 regex_t GET_REGEX;
 
 /* Compile regexes */
-bool init(void) {
-    int regRes = regcomp(&GET_REGEX, "GET /\\S\\S* HTTP/1.0[\r\n]", 0);
+bool initRegex(void) {
+
+    int regRes = regcomp(&GET_REGEX, "GET /\\S\\S* HTTP/1.0", 0);
     if (regRes != 0) {
         fprintf(stderr, "Error while compiling GET Regex!\n");
         return false;
     }
+    return true;
 }
 
 // Error buffer
@@ -53,10 +55,10 @@ bool isValidGET(char *request, int length) {
     // Execute the regex
     regRes = regexec(&GET_REGEX, request, 0, NULL, 0);
     // Is a GET request
-    if (regRes)
+    if (regRes == 0)
         return true;
     // Is not a GET request
-    if (regRes == REG_NOMATCH)
+    else if (regRes == REG_NOMATCH)
         return false;
     // Something failed
     else {

@@ -17,7 +17,7 @@
  */
 #include <stdbool.h>
 
-bool init(void);
+bool initRegex(void);
 
 bool isGETRequest(char *request, int length);
 

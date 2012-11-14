@@ -83,6 +83,10 @@ int main(int argc, char **args) {
     }
 
     clientList = newLinkedList();
+    if (!initRegex()){
+        perror("Can't init regex!");
+        return EXIT_FAILURE;
+    }
 
     printf("Trying to listen to the port %ld...\n", port);
     // CREATE A SOCKET THE SERVER WILL LISTEN TO
@@ -159,25 +163,18 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
         perror("Can't allocate memory for the clientData struct!\n");
         return EXIT_FAILURE;
     }
-    puts("Memory allocated");
-
     int result = 0;
     // create data for the thread
-    getClientData(clientData, clientSocket, clientInformation);
-    puts("Data created!");
-    
+    getClientData(clientData, clientSocket, clientInformation);    
     
     // Create thread
     pthread_t thread;
     result = pthread_create(&thread, NULL, &handleClient, clientData);
-    puts("Thread created");
     if (result != 0) {
         perror("Can't create new thread for client!\n");
         return EXIT_FAILURE;
     }
-    puts("Thread successfully created");
     clientData->thread = &thread;
-    puts("Thread ready!");
     add(clientList, clientData);     
 
     return EXIT_SUCCESS;
@@ -209,8 +206,9 @@ void *handleClient(void *arg) {
         if (bytes_read_offset < 4 || strcmp((clientData->inBuffer) + bytes_read_offset - 4, "\r\n\r\n") != 0) {
             continue;            
         }
-        if (isGETRequest(clientData->inBuffer, bytes_read)) {
-            if (isValidGET(clientData->inBuffer, bytes_read)) {
+        memset((clientData->inBuffer) + bytes_read_offset -4, 0 , 4);
+        if (isGETRequest(clientData->inBuffer, bytes_read_offset)) {
+            if (isValidGET(clientData->inBuffer, bytes_read_offset)) {
                 char fileBuffer[255] = {0};
                 extractFileFromGET(fileBuffer, clientData->inBuffer);
                 int file = open(fileBuffer, "r");
@@ -258,6 +256,7 @@ void *handleClient(void *arg) {
         }
         memset(clientData->outBuffer, 0, sizeof(clientData->outBuffer));
         memset(clientData->inBuffer, 0, sizeof(clientData->inBuffer));
+        bytes_read_offset = 0;
     }
 
     // CLOSE CONNECTION
