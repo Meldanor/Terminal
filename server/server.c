@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sendfile.h>
 #include <unistd.h>
 #include <netinet/in.h>
 
@@ -138,6 +139,7 @@ void serverLoop(void) {
     while (serverIsRunning) {
         // BLOCKS UNTIL A CONNECTION IS INSIDE THE QUEUE
         clientSocket = accept( serverSocket, (struct sockaddr*)(&client), &len);
+        puts("Client incoming...");
         if (clientSocket < 0 ) {
             perror("Can't accept a new client!\n");
             continue;
@@ -157,19 +159,24 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
         perror("Can't allocate memory for the clientData struct!\n");
         return EXIT_FAILURE;
     }
+    puts("Memory allocated");
 
-    pthread_t *thread;
     int result = 0;
     // create data for the thread
     getClientData(clientData, clientSocket, clientInformation);
+    puts("Data created!");
+    
     // Create thread
-    result = pthread_create(thread, NULL, &handleClient, clientData);
+    pthread_t thread;
+    result = pthread_create(&thread, NULL, &handleClient, clientData);
+    puts("Thread created");
     if (result != 0) {
         perror("Can't create new thread for client!\n");
         return EXIT_FAILURE;
     }
-    clientData->thread = thread;
-
+    puts("Thread successfully created");
+    clientData->thread = &thread;
+    puts("Thread ready!");
     add(clientList, clientData);     
 
     return EXIT_SUCCESS;
@@ -199,9 +206,9 @@ void *handleClient(void *arg) {
             if (isValidGET(clientData->inBuffer, bytes_read)) {
                 char fileBuffer[255] = {0};
                 extractFileFromGET(fileBuffer, clientData->inBuffer);
-                FILE *file = fopen(fileBuffer, "r");
+                int file = open(fileBuffer, "r");
                 // Send Error 404 - File Not Found                
-                if (file == NULL) {
+                if (file < 0) {
                     Error404(clientData->outBuffer);
                     bytes_sent = strlen(clientData->outBuffer);
                     bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);                    
@@ -215,12 +222,12 @@ void *handleClient(void *arg) {
                         break;
                     }
                     stat(fileBuffer, fStat);
-                    
+
                     // Create response
                     GETResponseHead(clientData->outBuffer, "content/data", fStat->st_size);
                     // Send response
                     bytes_sent = write(clientData->clientSocket, clientData->outBuffer, sizeof(clientData->outBuffer));
-                    transferFile(file, clientData->clientSocket);
+                    sendfile(clientData->clientSocket, file, 0, fStat->st_size);
                     // Finish response
                     write(clientData->clientSocket, "\n\n", strlen("\n\n"));
                 }
@@ -247,8 +254,8 @@ void *handleClient(void *arg) {
     close(clientData->clientSocket);
     clearClient(clientData);
 
-    removeElement(clientList, clientData);
-    free(clientData);
+    //removeElement(clientList, clientData);
+ //   free(clientData);
     puts("Client disconnected");
 }
 
@@ -264,10 +271,10 @@ void stopServer(int signal) {
     if (clients != NULL) {   
         for (i = 0 ; i < clientList->size; ++i) {
             close(clients[i]->clientSocket);
-            clearClient(clients[i]);
+            //clearClient(clients[i]);
         }
     }
-    clearList(clientList);
+    //clearList(clientList);
     // Closer server socket
     puts("Close server socket...");
     // CLOSE SERVER SOCKET    

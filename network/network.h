@@ -23,8 +23,6 @@
 #include <stdio.h>
 #include <netinet/in.h>
 
-int transferFile(FILE *source, int clientSocket);
-
 int createSocket(void);
 
 int getAddress(char *address, struct sockaddr_in *sockAddr);

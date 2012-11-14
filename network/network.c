@@ -28,29 +28,6 @@
 
 #define OUT_BUFFER_SIZE 4096
 
-int transferFile(FILE *source, int clientSocket) {
-
-    char buffer[OUT_BUFFER_SIZE];
-    char *p = buffer;
-    int bytes_read;
-    int bytes_send;
-    while((bytes_read = read(source, buffer, OUT_BUFFER_SIZE)) > 0) {
-        p = buffer;
-        do {
-            bytes_send = write(clientSocket, p, bytes_read);
-            if (bytes_send >= 0) {
-                bytes_read -= bytes_send;
-                p += bytes_send;
-            }
-            if (errno != EINTR)
-                return EXIT_FAILURE;
-        }
-        while (bytes_read > 0);
-    }
-
-    return EXIT_SUCCESS;
-}
-
 int createSocket(void) {
     return socket(SOCKET_FAMILY, SOCKET_TYPE, SOCKET_PROTOCOL);
 }
