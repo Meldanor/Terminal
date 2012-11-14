@@ -25,7 +25,7 @@ number = 25
 connections = []
 
 if len (sys.argv) < 3:
-	print("use: %s <host> <port> [nr connections=25] [req. file=/index.html]" % sys.argv[0])
+	print "use: %s <host> <port> [nr connections=25] [req. file=/index.html]" % sys.argv[0]
 	sys.exit(1)
 
 host = sys.argv[1]
@@ -45,20 +45,19 @@ class Connection:
 		self.file = file
 
 	def initReq(self):
-		self.sock.send(str.encode("GET"))
+		self.sock.send("GET")
 
 	def completeReq(self):
-		a = str.encode(" " + self.file + " HTTP/1.0\r\n\r\n")
-		self.sock.send(a)
+		self.sock.send(" " + self.file + " HTTP/1.0\r\n\r\n")
 
 	def readAnswer(self):
 		while True:
 			buf = self.sock.recv(1024)
 			if not buf: break
-			self.answer += bytes.decode(buf)
+			self.answer += buf
 
 	def printAnswer(self):
-		print(self.answer)
+		print self.answer
 	
 	def close(self):
 		self.sock.close()
@@ -71,12 +70,12 @@ for i in range(0,number):
 		con = Connection(host, port)
 		con.initReq()
 		connections += [con]
-		print("Initiated connection %i" % (i+1))
-	except socket.error as msg:
-		print("Connection %i failed: %s" % (i+1,msg[1]))
+		print "Initiated connection %i" % (i+1)
+	except socket.error, msg:
+		print "Connection %i failed: %s" % (i+1,msg[1])
 		sys.exit(1)
 
-input("press Enter to close some connections")
+raw_input("press Enter to close some connections")
 
 i = 1
 while i <= (number-3)/2:
@@ -85,31 +84,31 @@ while i <= (number-3)/2:
 	if con.connected:
 		i += 1
 		con.completeReq()
-		print("Completed request on connection %i" % (r+1))
+		print "Completed request on connection %i" % (r+1)
 		con.readAnswer()
 		con.close()
 
 if number>3:
-	input("press Enter to close connection 1 before request is complete")
+	raw_input("press Enter to close connection 1 before request is complete")
 	connections[0].close()
 
-	input("press Enter to close connection 2 without reading the answer")
+	raw_input("press Enter to close connection 2 without reading the answer")
 	connections[1].completeReq()
 	connections[1].close()
 
-	input("press Enter to read and print the answer of connection 3")
+	raw_input("press Enter to read and print the answer of connection 3")
 	connections[2].completeReq()
 	connections[2].readAnswer()
 	connections[2].printAnswer()
 	connections[2].close()
 
-input("press Enter to complete the rest of the requests and close connections")
+raw_input("press Enter to complete the rest of the requests and close connections")
 
 i=1
 for con in connections:
 	if con.connected:
 		con.completeReq()
-		print("Completed request on connection %i" % i)
+		print "Completed request on connection %i" % i
 		con.readAnswer()
 		con.close()
 	i += 1
