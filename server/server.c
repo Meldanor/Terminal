@@ -190,19 +190,24 @@ void *handleClient(void *arg) {
 
     int bytes_read;
     int bytes_sent;
+    int bytes_read_offset = 0;
 
     // client loop
     while (clientData->isConnected) {
-        // TODO: HIER FIXEN
         // Wait for input from client
-        bytes_read = read(clientData->clientSocket, clientData->inBuffer, sizeof(clientData->inBuffer));
+        bytes_read = read(clientData->clientSocket, clientData->inBuffer + bytes_read_offset, sizeof(clientData->inBuffer));
         if (bytes_read == -1) {
             perror("Can't read from input stream! Disconnect the client !");
             break;
         }
-        else if (bytes_read = 0 ) {
+       /* else if (bytes_read == 0 ) {
             puts("No input from client");
             break;
+        } */
+
+        bytes_read_offset =  bytes_read_offset + bytes_read;
+        if (bytes_read_offset < 4 || strcmp((clientData->inBuffer) + bytes_read_offset - 4, "\r\n\r\n") != 0) {
+            continue;            
         }
         if (isGETRequest(clientData->inBuffer, bytes_read)) {
             if (isValidGET(clientData->inBuffer, bytes_read)) {
