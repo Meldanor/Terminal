@@ -166,6 +166,7 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
     getClientData(clientData, clientSocket, clientInformation);
     puts("Data created!");
     
+    
     // Create thread
     pthread_t thread;
     result = pthread_create(&thread, NULL, &handleClient, clientData);
@@ -192,6 +193,7 @@ void *handleClient(void *arg) {
 
     // client loop
     while (clientData->isConnected) {
+        // TODO: HIER FIXEN
         // Wait for input from client
         bytes_read = read(clientData->clientSocket, clientData->inBuffer, sizeof(clientData->inBuffer));
         if (bytes_read == -1) {
@@ -237,6 +239,8 @@ void *handleClient(void *arg) {
                 Error400(clientData->outBuffer);
                 bytes_sent = strlen(clientData->outBuffer);
                 bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);
+                puts("Bad request");
+                printf("%s\n", clientData->inBuffer);
             }
         }
         // Send Error 501 - Not implemented request
@@ -244,7 +248,8 @@ void *handleClient(void *arg) {
             Error501(clientData->outBuffer);
             bytes_sent = strlen(clientData->outBuffer);
             bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);
-        
+            puts("Not implemented request");
+            printf("%s\n", clientData->inBuffer);
         }
         memset(clientData->outBuffer, 0, sizeof(clientData->outBuffer));
         memset(clientData->inBuffer, 0, sizeof(clientData->inBuffer));
