@@ -24,23 +24,6 @@
 #include <regex.h>
 #include <time.h>
 
-/* Regex Pointer*/
-regex_t GET_REGEX;
-
-/* Compile regexes */
-bool initRegex(void) {
-
-    int regRes = regcomp(&GET_REGEX, "GET /\\S\\S* HTTP/1.0", 0);
-    if (regRes != 0) {
-        fprintf(stderr, "Error while compiling GET Regex!\n");
-        return false;
-    }
-    return true;
-}
-
-// Error buffer
-char regexErrorBuffer[64];
-
 /* --- Functions for the GET Request --- */
 
 #define GET_HEAD "GET "
@@ -51,9 +34,15 @@ bool isGETRequest(char *request, int length) {
 }
 
 bool isValidGET(char *request, int length) {
-    int regRes = 0;
+    
+    regex_t regex;
+    int regRes = regcomp(&regex, "GET /\\S\\S* HTTP/1.0", 0);
+    if (regRes != 0) {
+        perror("Error while compiling GET Regex!");
+        return false;
+    }
     // Execute the regex
-    regRes = regexec(&GET_REGEX, request, 0, NULL, 0);
+    regRes = regexec(&regex, request, 0, NULL, 0);
     // Is a GET request
     if (regRes == 0)
         return true;
@@ -62,7 +51,8 @@ bool isValidGET(char *request, int length) {
         return false;
     // Something failed
     else {
-        regerror(regRes, &GET_REGEX, regexErrorBuffer, sizeof(regexErrorBuffer));
+        char regexErrorBuffer[64];
+        regerror(regRes, &regex, regexErrorBuffer, sizeof(regexErrorBuffer));
         fprintf(stderr, "Regex match failed : %s \n", regexErrorBuffer);
         return false;
     }
@@ -70,7 +60,7 @@ bool isValidGET(char *request, int length) {
 
 bool extractFileFromGET(char *fileBuffer, char *request) {
     // Start of the file part
-    char *start = request + 4;
+    char *start = request + 5;
 
     // Search for the end of the file part
     char *end = NULL;

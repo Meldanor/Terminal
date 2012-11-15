@@ -23,6 +23,7 @@
 #include <limits.h>
 #include <signal.h>
 
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -83,10 +84,10 @@ int main(int argc, char **args) {
     }
 
     clientList = newLinkedList();
-    if (!initRegex()){
+   /* if (!initRegex()){
         perror("Can't init regex!");
         return EXIT_FAILURE;
-    }
+    }*/
 
     printf("Trying to listen to the port %ld...\n", port);
     // CREATE A SOCKET THE SERVER WILL LISTEN TO
@@ -197,29 +198,30 @@ void *handleClient(void *arg) {
             perror("Can't read from input stream! Disconnect the client !");
             break;
         }
-       /* else if (bytes_read == 0 ) {
-            puts("No input from client");
-            break;
-        } */
-
         bytes_read_offset =  bytes_read_offset + bytes_read;
         if (bytes_read_offset < 4 || strcmp((clientData->inBuffer) + bytes_read_offset - 4, "\r\n\r\n") != 0) {
             continue;            
         }
+        // Delete the \r\n\r\n in the request
         memset((clientData->inBuffer) + bytes_read_offset -4, 0 , 4);
+        // Check if it is a get request
         if (isGETRequest(clientData->inBuffer, bytes_read_offset)) {
+            // Check if it is valid
             if (isValidGET(clientData->inBuffer, bytes_read_offset)) {
                 char fileBuffer[255] = {0};
                 extractFileFromGET(fileBuffer, clientData->inBuffer);
-                int file = open(fileBuffer, "r");
+                // file not found?
+                int file = open(fileBuffer, O_RDONLY);
                 // Send Error 404 - File Not Found                
                 if (file < 0) {
                     Error404(clientData->outBuffer);
                     bytes_sent = strlen(clientData->outBuffer);
-                    bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);                    
+                    bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);
+                    printf("Error 404 - File Not Found: %s\n", fileBuffer);
                 }
                 // Transfer file
                 else {
+                    printf("Sending file %s\n", fileBuffer);
                     // Get information about the file
                     struct stat *fStat = (struct stat*)(malloc(sizeof(struct stat)));
                     if (fStat == NULL) {
