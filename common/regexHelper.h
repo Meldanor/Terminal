@@ -18,4 +18,4 @@
 
 #include <stdbool.h>
 
-bool isInteger(char *string);
+bool isNumber(char *string);

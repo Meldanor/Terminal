@@ -26,3 +26,5 @@
 int createSocket(void);
 
 int getAddress(char *address, struct sockaddr_in *sockAddr);
+
+int sendAll(int dest, char *data, int dataLength);

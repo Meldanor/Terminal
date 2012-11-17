@@ -17,6 +17,7 @@
  */
  
 #include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 
 #include <sys/types.h>
@@ -49,4 +50,23 @@ int getAddress(char *address, struct sockaddr_in *sockAddr) {
     }
     // FOUND AN ADDRESS
     return EXIT_SUCCESS;    
+}
+
+int sendAll(int dest, char *data, int dataLength) {
+    int sent = write(dest, data, dataLength);
+    if (sent == -1)
+        return EXIT_FAILURE;
+    
+    if (sent != dataLength) {
+        char *p = data;
+        do {
+            dataLength -= sent;
+            p += sent;
+            sent = write(dest, p, dataLength);
+            if (sent == -1)
+                return EXIT_FAILURE;
+        } while (dataLength > 0);
+    }
+    
+    return EXIT_SUCCESS;
 }

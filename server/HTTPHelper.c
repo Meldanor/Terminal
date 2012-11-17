@@ -18,11 +18,16 @@
 
 #include "HTTPHelper.h"
 
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <regex.h>
 #include <time.h>
+
+bool isHTTPRequest(char *request, int length) {
+    return (length < 4 || strcmp((request) + length - 4, "\r\n\r\n") != 0);
+}
 
 /* --- Functions for the GET Request --- */
 
@@ -117,17 +122,24 @@ void GETResponseHead(char *headBuffer, char *contentType, int contentLength) {
 
 /* ---- Misc functions ---- */
 
-void Error400(char *buffer) {
-    memset(buffer, 0, sizeof(buffer));
-    strcat(buffer, "HTTP/1.0 400 Bad Request\n\n");
-}
-
-void Error404(char *buffer) {
-    memset(buffer, 0, sizeof(buffer));
-    strcat(buffer, "HTTP/1.0 404 Not found\n\n");
-}
-
-void Error501(char *buffer) {
-    memset(buffer, 0, sizeof(buffer));
-    strcat(buffer, "HTTP/1.0 501 Not Implemented\n\n");
+void sendError(int errorCode, int dest, char *buffer) {
+    memset(buffer, 0 , sizeof(buffer));
+    switch(errorCode) {
+        case 400:
+            strcat(buffer, "HTTP/1.0 400 Bad Request");
+            break;
+        case 404:
+            strcat(buffer, "HTTP/1.0 404 Not found");
+            break;
+        case 413:
+            strcat(buffer, "HTTP/1.0 413 Request Entity Too Large!");
+            break;
+        case 501:
+            strcat(buffer, "HTTP/1.0 501 Not Implemented");
+            break;
+        default:
+            fprintf(stderr, "Unknown error code %d!\n", errorCode);
+    }
+    strcat(buffer, "\r\n\r\n");
+    write(dest, buffer, strlen(buffer));
 }

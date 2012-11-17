@@ -37,6 +37,7 @@
 #include "clientData.h"
 #include "../network/network.h"
 #include "../common/linkedList.h"
+#include "../common/regexHelper.h"
 #include "HTTPHelper.h"
 
 int serverSocket;
@@ -187,37 +188,49 @@ void *handleClient(void *arg) {
     struct clientData *clientData = (struct clientData *)(arg);
 
     int bytes_read;
-    int bytes_sent;
     int bytes_read_offset = 0;
 
     // client loop
     while (clientData->isConnected) {
-        // Wait for input from client
-        bytes_read = read(clientData->clientSocket, clientData->inBuffer + bytes_read_offset, sizeof(clientData->inBuffer));
+
+        if (bytes_read_offset >= sizeof(clientData->inBuffer)) {
+            memset((clientData->inBuffer), 0 , sizeof(clientData->inBuffer));
+            bytes_read_offset = 0;
+            sendError(413, clientData->clientSocket, clientData->outBuffer);
+            perror("Error 413 Request Entity Too Large!\n");
+        }
+
+        // Read the client requests
+        // Because of the request needn't to be in one flush
+        // We read with an offset
+        bytes_read = read(clientData->clientSocket, clientData->inBuffer + bytes_read_offset, sizeof(clientData->inBuffer) - bytes_read_offset);
+        
+        // Error while reading
         if (bytes_read == -1) {
             perror("Can't read from input stream! Disconnect the client !");
             break;
         }
-        bytes_read_offset =  bytes_read_offset + bytes_read;
-        if (bytes_read_offset < 4 || strcmp((clientData->inBuffer) + bytes_read_offset - 4, "\r\n\r\n") != 0) {
-            continue;            
-        }
+        bytes_read_offset += bytes_read;
+        
+        // HTTP Request must end with an \r\n\r\n
+        if (!isHTTPRequest(clientData->inBuffer, bytes_read_offset))
+            continue;
+
         // Delete the \r\n\r\n in the request
         memset((clientData->inBuffer) + bytes_read_offset -4, 0 , 4);
+
         // Check if it is a get request
         if (isGETRequest(clientData->inBuffer, bytes_read_offset)) {
             // Check if it is valid
             if (isValidGET(clientData->inBuffer, bytes_read_offset)) {
+                // open file
                 char fileBuffer[255] = {0};
                 extractFileFromGET(fileBuffer, clientData->inBuffer);
-                // file not found?
                 int file = open(fileBuffer, O_RDONLY);
                 // Send Error 404 - File Not Found                
                 if (file < 0) {
-                    Error404(clientData->outBuffer);
-                    bytes_sent = strlen(clientData->outBuffer);
-                    bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);
-                    printf("Error 404 - File Not Found: %s\n", fileBuffer);
+                    sendError(404, clientData->clientSocket, clientData->outBuffer);
+                    fprintf(stderr, "Error 404 - File Not Found: %s\n", fileBuffer);
                 }
                 // Transfer file
                 else {
@@ -233,7 +246,7 @@ void *handleClient(void *arg) {
                     // Create response
                     GETResponseHead(clientData->outBuffer, "content/data", fStat->st_size);
                     // Send response
-                    bytes_sent = write(clientData->clientSocket, clientData->outBuffer, sizeof(clientData->outBuffer));
+                    write(clientData->clientSocket, clientData->outBuffer, sizeof(clientData->outBuffer));
                     sendfile(clientData->clientSocket, file, 0, fStat->st_size);
                     // Finish response
                     write(clientData->clientSocket, "\n\n", strlen("\n\n"));
@@ -241,20 +254,14 @@ void *handleClient(void *arg) {
             }
             // Send Error 400 - Bad request
             else {
-                Error400(clientData->outBuffer);
-                bytes_sent = strlen(clientData->outBuffer);
-                bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);
-                puts("Bad request");
-                printf("%s\n", clientData->inBuffer);
+                sendError(400, clientData->clientSocket, clientData->outBuffer);
+                fprintf(stderr, "Error 400 - Bad request: %s\n", clientData->inBuffer);
             }
         }
         // Send Error 501 - Not implemented request
         else {
-            Error501(clientData->outBuffer);
-            bytes_sent = strlen(clientData->outBuffer);
-            bytes_sent = write(clientData->clientSocket, clientData->outBuffer, bytes_sent);
-            puts("Not implemented request");
-            printf("%s\n", clientData->inBuffer);
+            sendError(501, clientData->clientSocket, clientData->outBuffer);
+            fprintf(stderr, "Error 501 - Not implemented request : %s\n", clientData->inBuffer);
         }
         memset(clientData->outBuffer, 0, sizeof(clientData->outBuffer));
         memset(clientData->inBuffer, 0, sizeof(clientData->inBuffer));
@@ -268,6 +275,8 @@ void *handleClient(void *arg) {
     //removeElement(clientList, clientData);
  //   free(clientData);
     puts("Client disconnected");
+    
+    return NULL;
 }
 
 void stopServer(int signal) {

@@ -17,7 +17,7 @@
  */
 #include <stdbool.h>
 
-bool initRegex(void);
+bool isHTTPRequest(char *request, int length);
 
 bool isGETRequest(char *request, int length);
 
@@ -29,8 +29,4 @@ void getFormattedTime(char *buffer, int bufferSize);
 
 void GETResponseHead(char *headBuffer, char *contentType, int contentLength);
 
-void Error400(char *buffer);
-
-void Error404(char *buffer);
-
-void Error501(char *buffer);
+void sendError(int errorCode, int dest, char *buffer);
