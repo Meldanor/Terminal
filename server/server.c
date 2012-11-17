@@ -189,8 +189,9 @@ void *handleClient(void *arg) {
     // client loop
     while (clientData->isConnected) {
 
-        if (bytes_read_offset >= sizeof(clientData->inBuffer)) {
-            memset((clientData->inBuffer), 0 , sizeof(clientData->inBuffer));
+        if (bytes_read_offset >= OUT_BUFFER_SIZE) {
+            fprintf(stderr,"Offset: %d, Size: %d", bytes_read_offset, OUT_BUFFER_SIZE);
+            memset((clientData->inBuffer), 0 , OUT_BUFFER_SIZE);
             bytes_read_offset = 0;
             sendError(413, clientData->clientSocket, clientData->outBuffer);
             perror("Error 413 Request Entity Too Large!\n");
@@ -199,7 +200,7 @@ void *handleClient(void *arg) {
         // Read the client requests
         // Because of the request needn't to be in one flush
         // We read with an offset
-        bytes_read = read(clientData->clientSocket, clientData->inBuffer + bytes_read_offset, sizeof(clientData->inBuffer) - bytes_read_offset);
+        bytes_read = read(clientData->clientSocket, clientData->inBuffer + bytes_read_offset, OUT_BUFFER_SIZE - bytes_read_offset);
 
         // Error while reading
         if (bytes_read == -1) {

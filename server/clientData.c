@@ -22,9 +22,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define IN_BUFFER_SIZE 4096
-#define OUT_BUFFER_SIZE 4096
-
 /* function to encapsulate the necessary multithreaded information */
 int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *clientInformation) {
     // assign values

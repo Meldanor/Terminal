@@ -26,7 +26,7 @@
 #include <time.h>
 
 bool isHTTPRequest(char *request, int length) {
-    return (length < 4 || strcmp((request) + length - 4, "\r\n\r\n") != 0);
+    return (length > 4 && strcmp((request) + length - 4, "\r\n\r\n") == 0);
 }
 
 /* --- Functions for the GET Request --- */

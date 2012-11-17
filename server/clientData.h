@@ -19,6 +19,9 @@
 #include <pthread.h>
 #include <stdbool.h>
 
+#define IN_BUFFER_SIZE 4096
+#define OUT_BUFFER_SIZE 4096
+
 struct clientData {
     int clientSocket;
     bool isConnected;
