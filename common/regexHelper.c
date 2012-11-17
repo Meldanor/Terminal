@@ -35,7 +35,7 @@ bool isNumber(char *string) {
     if (regRes != 0 && regRes != REG_NOMATCH) {
         char buffer[64];
         regerror(regRes, &numberRegex, buffer, sizeof(buffer));
-        fprintf(stderr, "Regex match failed : %s \n", buffer);     
+        fprintf(stderr, "Regex match failed : %s \n", buffer);
     }
     // free memory
     regfree(&numberRegex);

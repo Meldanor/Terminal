@@ -72,7 +72,7 @@ void clearClient(struct clientData *clientData) {
     // free outBuffer
     if (clientData->outBuffer != NULL) {
         free(clientData->outBuffer);
-    }   
+    }
     // free the struct itself
     free(clientData);
 }

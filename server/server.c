@@ -69,7 +69,7 @@ int main(int argc, char **args) {
             if (!isNumber(args[++i])) {
                 printf("Port '%s' is an invalid number!\n", args[i]);
                 return EXIT_FAILURE;
-            }            
+            }
             port = strtol(args[i], (char **) NULL, 10);
             // DISALLOW KERNEL PORTS
             if (port <= 1024) {
@@ -85,10 +85,6 @@ int main(int argc, char **args) {
     }
 
     clientList = newLinkedList();
-   /* if (!initRegex()){
-        perror("Can't init regex!");
-        return EXIT_FAILURE;
-    }*/
 
     printf("Trying to listen to the port %ld...\n", port);
     // CREATE A SOCKET THE SERVER WILL LISTEN TO
@@ -161,14 +157,14 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
     struct clientData *clientData;
     clientData = malloc(sizeof(struct clientData));
     // not enought memory
-    if (clientData == NULL) { 
+    if (clientData == NULL) {
         perror("Can't allocate memory for the clientData struct!\n");
         return EXIT_FAILURE;
     }
     int result = 0;
     // create data for the thread
-    getClientData(clientData, clientSocket, clientInformation);    
-    
+    getClientData(clientData, clientSocket, clientInformation);
+
     // Create thread
     pthread_t thread;
     result = pthread_create(&thread, NULL, &handleClient, clientData);
@@ -177,7 +173,7 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
         return EXIT_FAILURE;
     }
     clientData->thread = &thread;
-    add(clientList, clientData);     
+    add(clientList, clientData);
 
     return EXIT_SUCCESS;
 }
@@ -204,14 +200,14 @@ void *handleClient(void *arg) {
         // Because of the request needn't to be in one flush
         // We read with an offset
         bytes_read = read(clientData->clientSocket, clientData->inBuffer + bytes_read_offset, sizeof(clientData->inBuffer) - bytes_read_offset);
-        
+
         // Error while reading
         if (bytes_read == -1) {
             perror("Can't read from input stream! Disconnect the client !");
             break;
         }
         bytes_read_offset += bytes_read;
-        
+
         // HTTP Request must end with an \r\n\r\n
         if (!isHTTPRequest(clientData->inBuffer, bytes_read_offset))
             continue;
@@ -227,7 +223,7 @@ void *handleClient(void *arg) {
                 char fileBuffer[255] = {0};
                 extractFileFromGET(fileBuffer, clientData->inBuffer);
                 int file = open(fileBuffer, O_RDONLY);
-                // Send Error 404 - File Not Found                
+                // Send Error 404 - File Not Found
                 if (file < 0) {
                     sendError(404, clientData->clientSocket, clientData->outBuffer);
                     fprintf(stderr, "Error 404 - File Not Found: %s\n", fileBuffer);
@@ -238,7 +234,7 @@ void *handleClient(void *arg) {
                     // Get information about the file
                     struct stat *fStat = (struct stat*)(malloc(sizeof(struct stat)));
                     if (fStat == NULL) {
-                        perror("Can't allocate memory for file stat!");                                            
+                        perror("Can't allocate memory for file stat!");
                         break;
                     }
                     stat(fileBuffer, fStat);
@@ -275,7 +271,7 @@ void *handleClient(void *arg) {
     //removeElement(clientList, clientData);
  //   free(clientData);
     puts("Client disconnected");
-    
+
     return NULL;
 }
 
@@ -285,10 +281,10 @@ void stopServer(int signal) {
     puts("Clean up server...");
 
     printf("Close %d client sockets...\n", clientList->size);
-    // CLOSE CLIENT SOCKETS 
+    // CLOSE CLIENT SOCKETS
     int i;
-    struct clientData **clients = (struct clientData**)(toArray(clientList)); 
-    if (clients != NULL) {   
+    struct clientData **clients = (struct clientData**)(toArray(clientList));
+    if (clients != NULL) {
         for (i = 0 ; i < clientList->size; ++i) {
             close(clients[i]->clientSocket);
             //clearClient(clients[i]);
@@ -297,7 +293,7 @@ void stopServer(int signal) {
     //clearList(clientList);
     // Closer server socket
     puts("Close server socket...");
-    // CLOSE SERVER SOCKET    
+    // CLOSE SERVER SOCKET
     close(serverSocket);
     puts("Finished server shutdown!");
     exit(signal);

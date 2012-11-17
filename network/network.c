@@ -67,6 +67,6 @@ int sendAll(int dest, char *data, int dataLength) {
                 return EXIT_FAILURE;
         } while (dataLength > 0);
     }
-    
+
     return EXIT_SUCCESS;
 }

@@ -54,7 +54,7 @@ bool add(struct LinkedList *list, void *value) {
         return false;
     }
     node->value = value;
-    
+
     if (isEmpty(list)) {
         node->next = NULL;
         node->prev = NULL;
@@ -133,7 +133,7 @@ void *removeAt(struct LinkedList *list, int index) {
     }
     if (index < 0 || index >= list->size) {
         perror("LinkedList.c:removeAt : Index outside the list!");
-        return NULL;    
+        return NULL;
     }
     if (index == 0)
         return removeFirst(list);
@@ -144,16 +144,16 @@ void *removeAt(struct LinkedList *list, int index) {
     bool forward = (index < (list->size / 2 ));    
     printf("Forwad: %s\n\n", forward ? "true" : "false");
     if (forward) {
-        cur = list->first;        
+        cur = list->first;
     }
     else {
         cur = list->last;
-        index = list->size - index;    
+        index = list->size - index;
     }
     if (forward) {
         while(index != 0) {
             cur = cur->next;
-            --index;  
+            --index;
         }
     }
     else {
@@ -224,7 +224,7 @@ void **toArray(struct LinkedList *list) {
         perror("LinkedList.c:toArray : List is null!");
         return NULL;
     }
-    if (isEmpty(list)) {                
+    if (isEmpty(list)) {
         return NULL;
     }
     void **ptr = malloc(sizeof(void*) * list->size);
