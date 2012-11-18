@@ -17,6 +17,7 @@
  */
  
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -28,6 +29,18 @@
 #include "network.h"
 
 #define OUT_BUFFER_SIZE 4096
+
+int transferFile(int source, int destination, char *buffer) {
+    
+    memset(buffer, 0, sizeof(buffer));
+    int bytes_read;
+    while((bytes_read = read(source, buffer, OUT_BUFFER_SIZE)) > 0) {
+        if (sendAll(destination, buffer, bytes_read) == -1)
+            return -1;
+    }
+
+    return EXIT_SUCCESS;
+}
 
 int createSocket(void) {
     return socket(SOCKET_FAMILY, SOCKET_TYPE, SOCKET_PROTOCOL);
@@ -53,7 +66,7 @@ int getAddress(char *address, struct sockaddr_in *sockAddr) {
 }
 
 int sendAll(int dest, char *data, int dataLength) {
-    int sent = write(dest, data, dataLength);
+    int sent = send(dest, data, dataLength,MSG_NOSIGNAL );
     if (sent == -1)
         return EXIT_FAILURE;
     if (sent != dataLength) {
@@ -61,7 +74,7 @@ int sendAll(int dest, char *data, int dataLength) {
         do {
             dataLength -= sent;
             p += sent;
-            sent = write(dest, p, dataLength);
+            sent = send(dest, p, dataLength,MSG_NOSIGNAL);
             if (sent == -1)
                 return EXIT_FAILURE;
         } while (dataLength > 0);

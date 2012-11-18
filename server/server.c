@@ -24,8 +24,8 @@
 #include <signal.h>
 
 #include <fcntl.h>
-#include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
 #include <unistd.h>
@@ -257,7 +257,7 @@ void *handleClient(void *arg) {
                     }
                     puts("Finished sending head");
                     puts("Start sendfile...");
-                    if (sendfile(clientData->clientSocket, file, NULL, fStat->st_size) == -1) {
+                    if (transferFile(file, clientData->clientSocket, clientData->inBuffer) == -1) {
                         perror("Error while sending file to client!");
                         break;
                     }
