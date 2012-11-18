@@ -95,29 +95,30 @@ void GETResponseHead(char *headBuffer, char *contentType, int contentLength) {
     memset(headBuffer,0, sizeof(headBuffer));
 
     // Add head
-    strcat(headBuffer, "HTTP/1.0 200 OK\n");
+    strcat(headBuffer, "HTTP/1.0 200 OK\r\n\r\n");
 
     // Add date
     char date[64];
     getFormattedTime(date, sizeof(date));
     strcat(headBuffer, date);
-    strcat(headBuffer, "\n");
-
+    strcat(headBuffer, "\r\n");
+/*
     // Add Content Type
     strcat(headBuffer, "Content-Type: ");
     strcat(headBuffer, contentType);
-    strcat(headBuffer, "\n");
+    strcat(headBuffer, "\r\n");
+*/
 
+    strcat(headBuffer, "Connection: close");
+    strcat(headBuffer, "\r\n");
+    
     // Add Content Length
     strcat(headBuffer, "Content-Length: ");
     char contentLengthBuffer[32];
     // Convert int to string(unsafe)
     sprintf(contentLengthBuffer, "%d", contentLength);
     strcat(headBuffer, contentLengthBuffer);
-    strcat(headBuffer, "\n");
-    
-    // Finish head information
-    strcat(headBuffer, "\n");
+    strcat(headBuffer, "\r\n\r\n");
 }
 
 /* ---- Misc functions ---- */

@@ -173,7 +173,7 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
         return EXIT_FAILURE;
     }
     clientData->thread = &thread;
-    add(clientList, clientData);
+    //add(clientList, clientData);
 
     return EXIT_SUCCESS;
 }
@@ -207,6 +207,9 @@ void *handleClient(void *arg) {
             perror("Can't read from input stream! Disconnect the client !");
             break;
         }
+        if (bytes_read == 0) {
+            break;
+        }
         bytes_read_offset += bytes_read;
 
         // HTTP Request must end with an \r\n\r\n
@@ -231,22 +234,38 @@ void *handleClient(void *arg) {
                 }
                 // Transfer file
                 else {
-                    printf("Sending file %s\n", fileBuffer);
+                    printf("Sending file %s\n", clientData->outBuffer);
                     // Get information about the file
                     struct stat *fStat = (struct stat*)(malloc(sizeof(struct stat)));
                     if (fStat == NULL) {
-                        perror("Can't allocate memory for file stat!");
+                        perror("Can't allocate memory for file stat!\n");
                         break;
                     }
-                    stat(fileBuffer, fStat);
-
+                    if (stat(fileBuffer, fStat) == -1) {
+                        fprintf(stderr, "Error while getting file stat!\n");
+                        break;
+                    }
+                    memset(clientData->outBuffer, 0, OUT_BUFFER_SIZE);
                     // Create response
                     GETResponseHead(clientData->outBuffer, "content/data", fStat->st_size);
                     // Send response
-                    write(clientData->clientSocket, clientData->outBuffer, sizeof(clientData->outBuffer));
-                    sendfile(clientData->clientSocket, file, 0, fStat->st_size);
+                    if (sendAll(clientData->clientSocket, clientData->outBuffer, OUT_BUFFER_SIZE) == -1) {
+                        fprintf(stderr, "Error while sending file to client!\n");
+                        break;
+                    }
+                    if (sendfile(clientData->clientSocket, file, 0, fStat->st_size) == -1) {
+                        fprintf(stderr, "Error while sending file to client!\n");
+                        break;
+                    }
+                    close(file);
                     // Finish response
-                    write(clientData->clientSocket, "\n\n", strlen("\n\n"));
+                    if (sendAll(clientData->clientSocket, "\r\n\r\n", strlen("\r\n\r\n")) == -1) {
+                        fprintf(stderr, "Error while sending file to client!\n");
+                        break;
+                    }
+                    printf("Finished sending file %s",fileBuffer);
+                    // Disconnect client
+                    clientData->isConnected = false;
                 }
             }
             // Send Error 400 - Bad request
@@ -260,14 +279,11 @@ void *handleClient(void *arg) {
             sendError(501, clientData->clientSocket, clientData->outBuffer);
             fprintf(stderr, "Error 501 - Not implemented request : %s\n", clientData->inBuffer);
         }
-        memset(clientData->outBuffer, 0, sizeof(clientData->outBuffer));
-        memset(clientData->inBuffer, 0, sizeof(clientData->inBuffer));
-        bytes_read_offset = 0;
     }
 
     // CLOSE CONNECTION
     close(clientData->clientSocket);
-    clearClient(clientData);
+    //clearClient(clientData);
 
     //removeElement(clientList, clientData);
  //   free(clientData);

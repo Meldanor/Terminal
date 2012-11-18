@@ -56,7 +56,6 @@ int sendAll(int dest, char *data, int dataLength) {
     int sent = write(dest, data, dataLength);
     if (sent == -1)
         return EXIT_FAILURE;
-    
     if (sent != dataLength) {
         char *p = data;
         do {
