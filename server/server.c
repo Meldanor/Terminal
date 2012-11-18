@@ -207,9 +207,8 @@ void *handleClient(void *arg) {
             perror("Can't read from input stream! Disconnect the client !");
             break;
         }
-        if (bytes_read == 0) {
+        if (bytes_read == 0)
             break;
-        }
         bytes_read_offset += bytes_read;
 
         // HTTP Request must end with an \r\n\r\n
@@ -238,31 +237,37 @@ void *handleClient(void *arg) {
                     // Get information about the file
                     struct stat *fStat = (struct stat*)(malloc(sizeof(struct stat)));
                     if (fStat == NULL) {
-                        perror("Can't allocate memory for file stat!\n");
+                        perror("Can't allocate memory for file stat!");
                         break;
                     }
                     if (stat(fileBuffer, fStat) == -1) {
-                        fprintf(stderr, "Error while getting file stat!\n");
+                        perror("Error while getting file stat!");
                         break;
                     }
                     memset(clientData->outBuffer, 0, OUT_BUFFER_SIZE);
+                    puts("Prepare head");
                     // Create response
                     GETResponseHead(clientData->outBuffer, "content/data", fStat->st_size);
+                    puts("Finished head");
                     // Send response
+                    puts("Send head");
                     if (sendAll(clientData->clientSocket, clientData->outBuffer, OUT_BUFFER_SIZE) == -1) {
-                        fprintf(stderr, "Error while sending file to client!\n");
+                        perror("Error while sending file to client!");
                         break;
                     }
-                    if (sendfile(clientData->clientSocket, file, 0, fStat->st_size) == -1) {
-                        fprintf(stderr, "Error while sending file to client!\n");
+                    puts("Finished sending head");
+                    puts("Start sendfile...");
+                    if (sendfile(clientData->clientSocket, file, NULL, fStat->st_size) == -1) {
+                        perror("Error while sending file to client!");
                         break;
                     }
+                    puts("Finished sendfile...");
                     close(file);
                     // Finish response
-                    if (sendAll(clientData->clientSocket, "\r\n\r\n", strlen("\r\n\r\n")) == -1) {
-                        fprintf(stderr, "Error while sending file to client!\n");
+/*                    if (sendAll(clientData->clientSocket, "\r\n\r\n", strlen("\r\n\r\n")) == -1) {
+                        perror("Error while sending file to client!\n");
                         break;
-                    }
+                    }*/
                     printf("Finished sending file %s",fileBuffer);
                     // Disconnect client
                     clientData->isConnected = false;
