@@ -141,7 +141,7 @@ void serverLoop(void) {
     while (serverIsRunning) {
         // BLOCKS UNTIL A CONNECTION IS INSIDE THE QUEUE
         clientSocket = accept( serverSocket, (struct sockaddr*)(&client), &len);
-        puts("Client incoming...");
+        puts("Creating new client...");
         if (clientSocket < 0 ) {
             perror("Can't accept a new client!\n");
             continue;
@@ -180,7 +180,7 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
 
 void *handleClient(void *arg) {
 
-    puts("Client connected");
+    puts("New Client connected!");
     struct clientData *clientData = (struct clientData *)(arg);
 
     int bytes_read;
@@ -215,9 +215,6 @@ void *handleClient(void *arg) {
         if (!isHTTPRequest(clientData->inBuffer, bytes_read_offset))
             continue;
 
-        // Delete the \r\n\r\n in the request
-        memset((clientData->inBuffer) + bytes_read_offset -4, 0 , 4);
-
         // Check if it is a get request
         if (isGETRequest(clientData->inBuffer, bytes_read_offset)) {
             // Check if it is valid
@@ -245,30 +242,20 @@ void *handleClient(void *arg) {
                         break;
                     }
                     memset(clientData->outBuffer, 0, OUT_BUFFER_SIZE);
-                    puts("Prepare head");
                     // Create response
                     GETResponseHead(clientData->outBuffer, "content/data", fStat->st_size);
-                    puts("Finished head");
                     // Send response
-                    puts("Send head");
                     if (sendAll(clientData->clientSocket, clientData->outBuffer, OUT_BUFFER_SIZE) == -1) {
                         perror("Error while sending file to client!");
                         break;
                     }
-                    puts("Finished sending head");
-                    puts("Start sendfile...");
                     if (transferFile(file, clientData->clientSocket, clientData->inBuffer) == -1) {
                         perror("Error while sending file to client!");
                         break;
                     }
-                    puts("Finished sendfile...");
                     close(file);
-                    // Finish response
-/*                    if (sendAll(clientData->clientSocket, "\r\n\r\n", strlen("\r\n\r\n")) == -1) {
-                        perror("Error while sending file to client!\n");
-                        break;
-                    }*/
-                    printf("Finished sending file %s",fileBuffer);
+
+                    printf("Finished sending file %s\n",fileBuffer);
                     // Disconnect client
                     clientData->isConnected = false;
                 }
