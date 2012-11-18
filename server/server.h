@@ -24,6 +24,6 @@ void serverLoop(void);
 
 void stopServer(int signal);
 
-int addClient(int clientSocket, struct sockaddr_in *clientInformation);
+//int addClient(int clientSocket, struct sockaddr_in *clientInformation);
 
-static void *handleClient(void *arg);
+void handleClient(int clientSocket);

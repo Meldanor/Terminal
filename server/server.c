@@ -31,20 +31,13 @@
 #include <unistd.h>
 #include <netinet/in.h>
 
-#include <pthread.h>
-
 #include "server.h"
-#include "clientData.h"
 #include "../network/network.h"
-#include "../common/linkedList.h"
 #include "../common/regexHelper.h"
 #include "HTTPHelper.h"
 
 int serverSocket;
 bool serverIsRunning = true;
-
-// CURRENT CONNECTED CLIENTS
-static struct LinkedList *clientList;
 
 int main(int argc, char **args) {
 
@@ -83,9 +76,7 @@ int main(int argc, char **args) {
             return EXIT_FAILURE;
         }
     }
-
-    clientList = newLinkedList();
-
+    
     printf("Trying to listen to the port %ld...\n", port);
     // CREATE A SOCKET THE SERVER WILL LISTEN TO
     if (createConnection(port) == EXIT_FAILURE) {
@@ -131,76 +122,71 @@ int createConnection(int port) {
     return EXIT_SUCCESS;
 }
 
+
+
 void serverLoop(void) {
     // INFORMATION ABOUT THE CLIENT
     struct sockaddr_in client;
-    int clientSocket;
     socklen_t len = sizeof(client);
 
     // SERVER LOOP
     while (serverIsRunning) {
         // BLOCKS UNTIL A CONNECTION IS INSIDE THE QUEUE
-        clientSocket = accept( serverSocket, (struct sockaddr*)(&client), &len);
+        int clientSocket = accept(serverSocket, (struct sockaddr*)(&client), &len);
         puts("Client incoming...");
         if (clientSocket < 0 ) {
             perror("Can't accept a new client!\n");
             continue;
         }
-        // Create new client and start handeling it
-        addClient(clientSocket, &client);
+        switch (fork()) {
+            case -1:
+                perror("Error while creating a new process!\n");
+                break;
+            case 0 :
+                handleClient(clientSocket);
+                break;
+        }
     }
 
     stopServer(EXIT_SUCCESS);
 }
 
-int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
-    struct clientData *clientData;
-    clientData = malloc(sizeof(struct clientData));
-    // not enought memory
-    if (clientData == NULL) {
-        perror("Can't allocate memory for the clientData struct!\n");
-        return EXIT_FAILURE;
-    }
-    int result = 0;
-    // create data for the thread
-    getClientData(clientData, clientSocket, clientInformation);
+#define IN_BUFFER_SIZE 4096
+#define OUT_BUFFER_SIZE 4096
 
-    // Create thread
-    pthread_t thread;
-    result = pthread_create(&thread, NULL, &handleClient, clientData);
-    if (result != 0) {
-        perror("Can't create new thread for client!\n");
-        return EXIT_FAILURE;
-    }
-    clientData->thread = &thread;
-    //add(clientList, clientData);
-
-    return EXIT_SUCCESS;
-}
-
-void *handleClient(void *arg) {
+void handleClient(int clientSocket) {
 
     puts("Client connected");
-    struct clientData *clientData = (struct clientData *)(arg);
+    bool isConnected = true;
 
-    int bytes_read;
+    char *inBuffer = malloc(IN_BUFFER_SIZE);
+    if (inBuffer == NULL) {
+        perror("Can't allocate memory for inBuffer!");
+        isConnected = false;
+    }
+    char *outBuffer = malloc(OUT_BUFFER_SIZE);
+    if (outBuffer == NULL) {
+        perror("Can't allocate memory for outBuffer!");
+        isConnected = false;
+    }
+    int bytes_read = 0;
     int bytes_read_offset = 0;
-
+    
     // client loop
-    while (clientData->isConnected) {
+    while (isConnected) {
 
         if (bytes_read_offset >= OUT_BUFFER_SIZE) {
             fprintf(stderr,"Offset: %d, Size: %d", bytes_read_offset, OUT_BUFFER_SIZE);
-            memset((clientData->inBuffer), 0 , OUT_BUFFER_SIZE);
+            memset(inBuffer, 0 , OUT_BUFFER_SIZE);
             bytes_read_offset = 0;
-            sendError(413, clientData->clientSocket, clientData->outBuffer);
+            sendError(413, clientSocket, outBuffer);
             perror("Error 413 Request Entity Too Large!\n");
         }
 
         // Read the client requests
         // Because of the request needn't to be in one flush
         // We read with an offset
-        bytes_read = read(clientData->clientSocket, clientData->inBuffer + bytes_read_offset, OUT_BUFFER_SIZE - bytes_read_offset);
+        bytes_read = read(clientSocket, inBuffer + bytes_read_offset, IN_BUFFER_SIZE - bytes_read_offset);
 
         // Error while reading
         if (bytes_read == -1) {
@@ -212,28 +198,28 @@ void *handleClient(void *arg) {
         bytes_read_offset += bytes_read;
 
         // HTTP Request must end with an \r\n\r\n
-        if (!isHTTPRequest(clientData->inBuffer, bytes_read_offset))
+        if (!isHTTPRequest(inBuffer, bytes_read_offset))
             continue;
 
         // Delete the \r\n\r\n in the request
-        memset((clientData->inBuffer) + bytes_read_offset -4, 0 , 4);
+        memset((inBuffer) + bytes_read_offset -4, 0 , 4);
 
         // Check if it is a get request
-        if (isGETRequest(clientData->inBuffer, bytes_read_offset)) {
+        if (isGETRequest(inBuffer, bytes_read_offset)) {
             // Check if it is valid
-            if (isValidGET(clientData->inBuffer, bytes_read_offset)) {
+            if (isValidGET(inBuffer, bytes_read_offset)) {
                 // open file
                 char fileBuffer[255] = {0};
-                extractFileFromGET(fileBuffer, clientData->inBuffer);
+                extractFileFromGET(fileBuffer, inBuffer);
                 int file = open(fileBuffer, O_RDONLY);
                 // Send Error 404 - File Not Found
                 if (file < 0) {
-                    sendError(404, clientData->clientSocket, clientData->outBuffer);
+                    sendError(404, clientSocket, outBuffer);
                     fprintf(stderr, "Error 404 - File Not Found: %s\n", fileBuffer);
                 }
                 // Transfer file
                 else {
-                    printf("Sending file %s\n", clientData->outBuffer);
+                    printf("Sending file %s\n", outBuffer);
                     // Get information about the file
                     struct stat *fStat = (struct stat*)(malloc(sizeof(struct stat)));
                     if (fStat == NULL) {
@@ -244,75 +230,60 @@ void *handleClient(void *arg) {
                         perror("Error while getting file stat!");
                         break;
                     }
-                    memset(clientData->outBuffer, 0, OUT_BUFFER_SIZE);
+                    memset(outBuffer, 0, OUT_BUFFER_SIZE);
                     puts("Prepare head");
                     // Create response
-                    GETResponseHead(clientData->outBuffer, "content/data", fStat->st_size);
+                    GETResponseHead(outBuffer, "content/data", fStat->st_size);
                     puts("Finished head");
                     // Send response
                     puts("Send head");
-                    if (sendAll(clientData->clientSocket, clientData->outBuffer, OUT_BUFFER_SIZE) == -1) {
+                    if (sendAll(clientSocket, outBuffer, OUT_BUFFER_SIZE) == -1) {
                         perror("Error while sending file to client!");
                         break;
                     }
                     puts("Finished sending head");
                     puts("Start sendfile...");
-                    if (sendfile(clientData->clientSocket, file, NULL, fStat->st_size) == -1) {
+                    if (sendfile(clientSocket, file, NULL, fStat->st_size) == -1) {
                         perror("Error while sending file to client!");
                         break;
                     }
                     puts("Finished sendfile...");
                     close(file);
                     // Finish response
-/*                    if (sendAll(clientData->clientSocket, "\r\n\r\n", strlen("\r\n\r\n")) == -1) {
+                    if (sendAll(clientSocket, "\r\n\r\n", strlen("\r\n\r\n")) == -1) {
                         perror("Error while sending file to client!\n");
                         break;
-                    }*/
-                    printf("Finished sending file %s",fileBuffer);
+                    }
+                    printf("Finished sending file %s\n",fileBuffer);
                     // Disconnect client
-                    clientData->isConnected = false;
+                    isConnected = false;
+                    fprintf(stderr, "Successfull: %d\n", close(clientSocket));
                 }
             }
             // Send Error 400 - Bad request
             else {
-                sendError(400, clientData->clientSocket, clientData->outBuffer);
-                fprintf(stderr, "Error 400 - Bad request: %s\n", clientData->inBuffer);
+                sendError(400, clientSocket, outBuffer);
+                fprintf(stderr, "Error 400 - Bad request: %s\n", inBuffer);
             }
         }
         // Send Error 501 - Not implemented request
         else {
-            sendError(501, clientData->clientSocket, clientData->outBuffer);
-            fprintf(stderr, "Error 501 - Not implemented request : %s\n", clientData->inBuffer);
+            sendError(501, clientSocket, outBuffer);
+            fprintf(stderr, "Error 501 - Not implemented request : %s\n", inBuffer);
         }
     }
 
     // CLOSE CONNECTION
-    close(clientData->clientSocket);
-    //clearClient(clientData);
+    close(clientSocket);
 
-    //removeElement(clientList, clientData);
- //   free(clientData);
     puts("Client disconnected");
-
-    return NULL;
+    exit(EXIT_SUCCESS);
 }
 
 void stopServer(int signal) {
 
     puts("Start server shutdown!");
     puts("Clean up server...");
-
-    printf("Close %d client sockets...\n", clientList->size);
-    // CLOSE CLIENT SOCKETS
-    int i;
-    struct clientData **clients = (struct clientData**)(toArray(clientList));
-    if (clients != NULL) {
-        for (i = 0 ; i < clientList->size; ++i) {
-            close(clients[i]->clientSocket);
-            //clearClient(clients[i]);
-        }
-    }
-    //clearList(clientList);
     // Closer server socket
     puts("Close server socket...");
     // CLOSE SERVER SOCKET
