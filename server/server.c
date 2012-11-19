@@ -259,7 +259,7 @@ void *handleClient(void *arg) {
                         break;
                     }
                     close(file);
-
+                    free(fStat);
                     printf("Finished sending file %s\n",fileBuffer);
                     // Disconnect client
                     clientData->isConnected = false;
