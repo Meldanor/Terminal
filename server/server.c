@@ -44,7 +44,9 @@ int serverSocket;
 bool serverIsRunning = true;
 
 // CURRENT CONNECTED CLIENTS
-static struct LinkedList *clientList;
+#define MAX_CLIENTS 64
+
+static struct clientData *clients[MAX_CLIENTS] = {NULL};
 
 int main(int argc, char **args) {
 
@@ -83,8 +85,6 @@ int main(int argc, char **args) {
             return EXIT_FAILURE;
         }
     }
-
-    clientList = newLinkedList();
 
     printf("Trying to listen to the port %ld...\n", port);
     // CREATE A SOCKET THE SERVER WILL LISTEN TO
@@ -173,7 +173,16 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
         return EXIT_FAILURE;
     }
     clientData->thread = &thread;
-    //add(clientList, clientData);
+    
+    // Add client to list
+    int i;
+    for (i = 0; i < MAX_CLIENTS; ++i) {
+        if (clients[i] == NULL) {
+            clients[i] = clientData;
+            clientData->position = i;
+            break;
+        }
+    }
 
     return EXIT_SUCCESS;
 }
@@ -275,10 +284,10 @@ void *handleClient(void *arg) {
 
     // CLOSE CONNECTION
     close(clientData->clientSocket);
-    //clearClient(clientData);
+    // Free Memory
+    clearClient(clientData);
+    clients[clientData->position] = NULL;
 
-    //removeElement(clientList, clientData);
- //   free(clientData);
     puts("Client disconnected");
 
     return NULL;
@@ -287,23 +296,20 @@ void *handleClient(void *arg) {
 void stopServer(int signal) {
 
     puts("Start server shutdown!");
-    puts("Clean up server...");
 
-    printf("Close %d client sockets...\n", clientList->size);
-    // CLOSE CLIENT SOCKETS
     int i;
-    struct clientData **clients = (struct clientData**)(toArray(clientList));
-    if (clients != NULL) {
-        for (i = 0 ; i < clientList->size; ++i) {
+    int counter= 0;
+    for (i = 0 ; i < MAX_CLIENTS; ++i) {
+        if (clients[i] != NULL) {
             close(clients[i]->clientSocket);
-            //clearClient(clients[i]);
+            clearClient(clients[i]);
+            ++counter;
         }
     }
-    //clearList(clientList);
-    // Closer server socket
-    puts("Close server socket...");
+    printf("%d Clients disconnected!\n", counter);
     // CLOSE SERVER SOCKET
     close(serverSocket);
+    puts("Closed server socket!");
     puts("Finished server shutdown!");
     exit(signal);
 }
