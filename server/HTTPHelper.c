@@ -38,7 +38,7 @@ bool isGETRequest(char *request, int length) {
     return length >= 4 && strncmp(request, GET_HEAD, 4) == 0;
 }
 
-bool isValidGET(char *request, int length) {
+bool isValidGET(char *request) {
 
     regex_t regex;
     int regRes = regcomp(&regex, "GET /\\S\\S* HTTP/1.[01].*", 0);
@@ -90,9 +90,9 @@ void getFormattedTime(char *buffer, int bufferSize) {
     strftime(buffer, bufferSize, "Date: %a, %d %b %Y %H:%M:%S %Z", localtime(&curTime));
 }
 
-void GETResponseHead(char *headBuffer, char *contentType, int contentLength) {
+void GETResponseHead(char *headBuffer, int contentLength) {
     // Clear buffer
-    memset(headBuffer,0, sizeof(headBuffer));
+    memset(headBuffer, 0, sizeof(headBuffer));
 
     // Add head
     strcat(headBuffer, "HTTP/1.0 200 OK\r\n\r\n");
@@ -102,12 +102,6 @@ void GETResponseHead(char *headBuffer, char *contentType, int contentLength) {
     getFormattedTime(date, sizeof(date));
     strcat(headBuffer, date);
     strcat(headBuffer, "\r\n");
-/*
-    // Add Content Type
-    strcat(headBuffer, "Content-Type: ");
-    strcat(headBuffer, contentType);
-    strcat(headBuffer, "\r\n");
-*/
 
     strcat(headBuffer, "Connection: close");
     strcat(headBuffer, "\r\n");

@@ -21,12 +21,12 @@ bool isHTTPRequest(char *request, int length);
 
 bool isGETRequest(char *request, int length);
 
-bool isValidGET(char *request, int length);
+bool isValidGET(char *request);
 
 bool extractFileFromGET(char *fileBuffer, char *request);
 
 void getFormattedTime(char *buffer, int bufferSize);
 
-void GETResponseHead(char *headBuffer, char *contentType, int contentLength);
+void GETResponseHead(char *headBuffer, int contentLength);
 
 void sendError(int errorCode, int dest, char *buffer);

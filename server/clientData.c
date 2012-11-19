@@ -36,7 +36,7 @@ int getClientData(struct clientData *clientData, int clientSocket, struct sockad
     bufferPointer = malloc(sizeof (char) * IN_BUFFER_SIZE);
     if (bufferPointer == NULL) {
         free(clientData);
-        perror("Can't allocate memory for the terminalClient inBuffer!\n");
+        perror("Can't allocate memory for the terminalClient inBuffer!");
         return EXIT_FAILURE;
     }
     memset(bufferPointer, 0, sizeof(bufferPointer));
@@ -47,7 +47,7 @@ int getClientData(struct clientData *clientData, int clientSocket, struct sockad
     if (bufferPointer == NULL) {
         free(clientData->inBuffer);
         free(clientData);
-        perror("Can't allocate memory for the terminalClient outBuffer!\n");
+        perror("Can't allocate memory for the terminalClient outBuffer!");
         return EXIT_FAILURE;
     }
     memset(bufferPointer, 0, sizeof(bufferPointer));

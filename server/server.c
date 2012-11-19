@@ -50,11 +50,6 @@ static struct clientData *clients[MAX_CLIENTS] = {NULL};
 
 int main(int argc, char **args) {
 
-    printf("Starting Terminal Server...\n");
-
-    // REGISTERING THE STOP SIGNAL
-    signal(SIGINT, stopServer);
-
     /* READ ARGUMENTS*/
     if (argc < 3) {
         printf("%s -p Port\n", args[0]);
@@ -85,15 +80,16 @@ int main(int argc, char **args) {
             return EXIT_FAILURE;
         }
     }
+    // REGISTERING THE STOP SIGNAL
+    signal(SIGINT, stopServer);
 
-    printf("Trying to listen to the port %ld...\n", port);
     // CREATE A SOCKET THE SERVER WILL LISTEN TO
     if (createConnection(port) == EXIT_FAILURE) {
         // SOMETHING FAILED
         return EXIT_FAILURE;
     }
 
-    printf("Terminal Server started!\n");
+    printf("Terminal Server started at port %ld.\n", port);
 
     // HANDLE ALL INCOMING CLIENTS
     serverLoop();
@@ -106,7 +102,7 @@ int createConnection(int port) {
     // CREATE A SOCKET USING IP PROTOCOL AND TCP PROTOCOL
     serverSocket = createSocket();
     if (serverSocket < 0) {
-        perror("Unable to create socket!\n");
+        perror("Unable to create socket!");
         return EXIT_FAILURE;
     }
 
@@ -121,7 +117,7 @@ int createConnection(int port) {
     // BIND THE SOCKET TO THE PARAMETER
     int result = bind(serverSocket, (struct sockaddr*)(&server_addr), sizeof(struct sockaddr_in));
     if (result < 0 ) {
-        perror("Unable to bind server to socket!\n");
+        perror("Unable to bind server to socket!");
         return EXIT_FAILURE;
     }
 
@@ -143,7 +139,7 @@ void serverLoop(void) {
         clientSocket = accept( serverSocket, (struct sockaddr*)(&client), &len);
         puts("Creating new client...");
         if (clientSocket < 0 ) {
-            perror("Can't accept a new client!\n");
+            perror("Can't accept a new client!");
             continue;
         }
         // Create new client and start handeling it
@@ -158,7 +154,7 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
     clientData = malloc(sizeof(struct clientData));
     // not enought memory
     if (clientData == NULL) {
-        perror("Can't allocate memory for the clientData struct!\n");
+        perror("Can't allocate memory for the clientData struct!");
         return EXIT_FAILURE;
     }
     int result = 0;
@@ -169,7 +165,7 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
     pthread_t thread;
     result = pthread_create(&thread, NULL, &handleClient, clientData);
     if (result != 0) {
-        perror("Can't create new thread for client!\n");
+        perror("Can't create new thread for client!");
         return EXIT_FAILURE;
     }
     clientData->thread = &thread;
@@ -203,7 +199,7 @@ void *handleClient(void *arg) {
             memset((clientData->inBuffer), 0 , OUT_BUFFER_SIZE);
             bytes_read_offset = 0;
             sendError(413, clientData->clientSocket, clientData->outBuffer);
-            perror("Error 413 Request Entity Too Large!\n");
+            perror("Error 413 Request Entity Too Large!");
         }
 
         // Read the client requests
@@ -213,7 +209,7 @@ void *handleClient(void *arg) {
 
         // Error while reading
         if (bytes_read == -1) {
-            perror("Can't read from input stream! Disconnect the client !");
+            perror("Can't read from input stream! Disconnect the client!");
             break;
         }
         if (bytes_read == 0)
@@ -227,7 +223,7 @@ void *handleClient(void *arg) {
         // Check if it is a get request
         if (isGETRequest(clientData->inBuffer, bytes_read_offset)) {
             // Check if it is valid
-            if (isValidGET(clientData->inBuffer, bytes_read_offset)) {
+            if (isValidGET(clientData->inBuffer)) {
                 // open file
                 char fileBuffer[255] = {0};
                 extractFileFromGET(fileBuffer, clientData->inBuffer);
@@ -252,7 +248,7 @@ void *handleClient(void *arg) {
                     }
                     memset(clientData->outBuffer, 0, OUT_BUFFER_SIZE);
                     // Create response
-                    GETResponseHead(clientData->outBuffer, "content/data", fStat->st_size);
+                    GETResponseHead(clientData->outBuffer, fStat->st_size);
                     // Send response
                     if (sendAll(clientData->clientSocket, clientData->outBuffer, OUT_BUFFER_SIZE) == -1) {
                         perror("Error while sending file to client!");
