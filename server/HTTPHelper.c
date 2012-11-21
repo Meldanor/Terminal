@@ -41,7 +41,7 @@ bool isGETRequest(char *request, int length) {
 bool isValidGET(char *request) {
 
     regex_t regex;
-    int regRes = regcomp(&regex, "GET /\\S\\S* HTTP/1.[01].*", 0);
+    int regRes = regcomp(&regex, "GET /\\S* HTTP/1.[01].*", 0);
     if (regRes != 0) {
         perror("Error while compiling GET Regex!");
         return false;
@@ -63,6 +63,8 @@ bool isValidGET(char *request) {
     }
 }
 
+#define DOC_FOLDER "htdocs/"
+
 bool extractFileFromGET(char *fileBuffer, char *request) {
     // Start of the file part
     char *start = request + 5;
@@ -75,6 +77,13 @@ bool extractFileFromGET(char *fileBuffer, char *request) {
         return false;
     // Copy file part from request to fileBuffer
     int size = (end - start) - 1;
+    strcat(fileBuffer, DOC_FOLDER);
+    if (size <= 0) {
+        strcat(fileBuffer, "index.html");
+        return true;
+    }
+
+    fileBuffer= fileBuffer + strlen(fileBuffer);
     for(; size >= 0; --size) {
         fileBuffer[size] = start[size];
     }
