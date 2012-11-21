@@ -217,8 +217,9 @@ void *handleClient(void *arg) {
         bytes_read_offset += bytes_read;
 
         // HTTP Request must end with an \r\n\r\n
-        if (!isHTTPRequest(clientData->inBuffer, bytes_read_offset))
-            continue;
+        if (!isHTTPRequest(clientData->inBuffer, bytes_read_offset)) {
+           continue;
+        }
 
         // Check if it is a get request
         if (isGETRequest(clientData->inBuffer, bytes_read_offset)) {
@@ -250,7 +251,7 @@ void *handleClient(void *arg) {
                     // Create response
                     GETResponseHead(clientData->outBuffer, fStat->st_size);
                     // Send response
-                    if (sendAll(clientData->clientSocket, clientData->outBuffer, OUT_BUFFER_SIZE) == -1) {
+                    if (sendAll(clientData->clientSocket, clientData->outBuffer, strlen(clientData->outBuffer)) == -1) {
                         perror("Error while sending file to client!");
                         break;
                     }

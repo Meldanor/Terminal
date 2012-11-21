@@ -32,7 +32,7 @@
 
 int transferFile(int source, int destination, char *buffer) {
     
-    memset(buffer, 0, sizeof(buffer));
+    memset(buffer, 0, OUT_BUFFER_SIZE);
     int bytes_read;
     while((bytes_read = read(source, buffer, OUT_BUFFER_SIZE)) > 0) {
         if (sendAll(destination, buffer, bytes_read) == -1)

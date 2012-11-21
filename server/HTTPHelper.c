@@ -26,7 +26,7 @@
 #include <time.h>
 
 bool isHTTPRequest(char *request, int length) {
-    return (length > 4 && strcmp((request) + length - 4, "\r\n\r\n") == 0);
+    return (length > 4 && strstr(request, "\r\n\r\n") != NULL);
 }
 
 /* --- Functions for the GET Request --- */
@@ -95,7 +95,7 @@ void GETResponseHead(char *headBuffer, int contentLength) {
     memset(headBuffer, 0, sizeof(headBuffer));
 
     // Add head
-    strcat(headBuffer, "HTTP/1.0 200 OK\r\n\r\n");
+    strcat(headBuffer, "HTTP/1.0 200 OK\r\n");
 
     // Add date
     char date[64];
@@ -103,9 +103,6 @@ void GETResponseHead(char *headBuffer, int contentLength) {
     strcat(headBuffer, date);
     strcat(headBuffer, "\r\n");
 
-    strcat(headBuffer, "Connection: close");
-    strcat(headBuffer, "\r\n");
-    
     // Add Content Length
     strcat(headBuffer, "Content-Length: ");
     char contentLengthBuffer[32];
