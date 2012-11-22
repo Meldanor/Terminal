@@ -50,36 +50,33 @@ static struct clientData *clients[MAX_CLIENTS] = {NULL};
 
 int main(int argc, char **args) {
 
-    /* READ ARGUMENTS*/
+    // Not enough arguments
     if (argc < 3) {
-        printf("%s -p Port\n", args[0]);
+        printf("Usage: %s -p Port\n", args[0]);
         return EXIT_FAILURE;
     }
-    int i;
-    char *cur;
+
     long int port;
-    for (i = 1 ; i < argc ; ++i) {
-        cur = args[i];
-        // READ PORT
-        if (strcmp(cur, "-p") == 0) {
-            // Check if the user has written a number
-            if (!isNumber(args[++i])) {
-                printf("Port '%s' is an invalid number!\n", args[i]);
+
+    // Parse arguments
+    int opt;
+    char *endptr;
+	while ((opt = getopt(argc, args, "p:")) != -1) {
+		switch (opt) {
+			case 'p':
+			    // Convert the string to a integer
+                port = strtol(optarg, &endptr, 10);
+                // Invalid input - Contains no number
+                if (optarg == endptr) {
+                    printf("Port '%s' is an invalid number!\n", optarg);
+                    return EXIT_FAILURE;
+                }
+                break;
+            default:
+                fprintf(stderr, "Unknown paramater %c", opt);
                 return EXIT_FAILURE;
-            }
-            port = strtol(args[i], (char **) NULL, 10);
-            // DISALLOW KERNEL PORTS
-            if (port <= 1024) {
-                printf("Port %ld must be higher than 1024!\n", port);
-                return EXIT_FAILURE;
-            }
-        }
-        // UNKNOWN OPTION
-        else {
-            printf("Unknown option %s\n", cur);
-            return EXIT_FAILURE;
-        }
-    }
+		}
+	}
     // REGISTERING THE STOP SIGNAL
     signal(SIGINT, stopServer);
 
