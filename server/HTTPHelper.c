@@ -143,6 +143,5 @@ void sendError(int errorCode, int dest, char *buffer) {
         default:
             fprintf(stderr, "Unknown error code %d!\n", errorCode);
     }
-    fprintf(stderr, "%s", buffer);
     sendAll(dest, buffer, strlen(buffer));
 }
