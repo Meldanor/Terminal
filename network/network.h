@@ -16,17 +16,6 @@
  * along with Terminal.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define SOCKET_FAMILY AF_INET
-#define SOCKET_TYPE SOCK_STREAM
-#define SOCKET_PROTOCOL 0
-
-#include <stdio.h>
-#include <netinet/in.h>
-
 int transferFile(int source, int destination, char *buffer);
-
-int createSocket(void);
-
-int getAddress(char *address, struct sockaddr_in *sockAddr);
 
 int sendAll(int dest, char *data, int dataLength);

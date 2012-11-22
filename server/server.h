@@ -16,9 +16,7 @@
  * along with Terminal.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define SERVER_QUEUE_SIZE 4
-
-int createConnection(int port);
+int initConnection(char *port);;
 
 void serverLoop(void);
 

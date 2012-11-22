@@ -16,15 +16,13 @@
  * along with Terminal.  If not, see <http://www.gnu.org/licenses/>.
  */
  
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#include <netinet/in.h>
 
 #include "network.h"
 
@@ -40,29 +38,6 @@ int transferFile(int source, int destination, char *buffer) {
     }
 
     return EXIT_SUCCESS;
-}
-
-int createSocket(void) {
-    return socket(SOCKET_FAMILY, SOCKET_TYPE, SOCKET_PROTOCOL);
-}
-
-int getAddress(char *address, struct sockaddr_in *sockAddr) {
-    // IS THE ADDRESS IN THE FORMAT XXX.YYYY.ZZZZ.WWW LIKE 127.0.0.1?
-    // IF RESULT IS ZERO, IT ISN'T
-    if (inet_aton(address, &(sockAddr->sin_addr)) == 0) {
-        // TRY TO RESOLVE THE DOMAIN
-        struct hostent *host;
-        // RESOLVE THE DOMAIN...
-        host = gethostbyname(address);
-        // UNABLE TO RESOLVE
-        if (host == NULL) {
-            printf("Unknown address %s!\n", address);
-            return EXIT_FAILURE;
-        }
-        sockAddr->sin_addr = *(struct in_addr*)host->h_addr;
-    }
-    // FOUND AN ADDRESS
-    return EXIT_SUCCESS;    
 }
 
 int sendAll(int dest, char *data, int dataLength) {

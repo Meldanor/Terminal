@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <netdb.h>
 
 #include <pthread.h>
 
@@ -36,11 +37,10 @@
 #include "../network/network.h"
 #include "HTTPHelper.h"
 
+#define MAX_CLIENTS 64
+
 int serverSocket;
 bool serverIsRunning = true;
-
-// CURRENT CONNECTED CLIENTS
-#define MAX_CLIENTS 64
 
 static struct clientData *clients[MAX_CLIENTS] = {NULL};
 
@@ -52,82 +52,80 @@ int main(int argc, char **args) {
         return EXIT_FAILURE;
     }
 
-    long int port;
+    char *port;
 
     // Parse arguments
     int opt;
-    char *endptr;
 	while ((opt = getopt(argc, args, "p:")) != -1) {
 		switch (opt) {
 			case 'p':
-			    // Convert the string to a integer
-                port = strtol(optarg, &endptr, 10);
-                // Invalid input - Contains no number
-                if (optarg == endptr) {
-                    printf("Port '%s' is an invalid number!\n", optarg);
-                    return EXIT_FAILURE;
-                }
+                port = optarg;
                 break;
             default:
                 fprintf(stderr, "Unknown paramater %c", opt);
                 return EXIT_FAILURE;
 		}
 	}
-    // REGISTERING THE STOP SIGNAL
+    // REGISTERING THE STOP SIGNAL (CTRL+C)
     signal(SIGINT, stopServer);
-
-    // CREATE A SOCKET THE SERVER WILL LISTEN TO
-    if (createConnection(port) == EXIT_FAILURE) {
-        // SOMETHING FAILED
+    
+    // Create a ServerSocket the programm is listening to
+    if (initConnection(port) == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
 
-    printf("Terminal Server started at port %ld.\n", port);
+    printf("Terminal Server started at port %s.\n", port);
 
-    // HANDLE ALL INCOMING CLIENTS
     serverLoop();
 
     return EXIT_SUCCESS;
 }
 
-int createConnection(int port) {
+int initConnection(char *port) {
 
-    // CREATE A SOCKET USING IP PROTOCOL AND TCP PROTOCOL
-    serverSocket = createSocket();
-    if (serverSocket < 0) {
-        perror("Unable to create socket!");
+    // Information about the connection type
+    struct addrinfo hints;
+    memset(&hints, 0 , sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC; // IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM; // TCP
+    hints.ai_flags = AI_PASSIVE; // Listen to socket -> Allow every ip
+    hints.ai_protocol = 0; // Any protocol of TCP is allowed
+    
+    // Store information in struct "res"
+    struct addrinfo *res;
+    if (getaddrinfo(NULL, port, &hints, &res) == -1) {
+        perror("Can't parse information for socket creation");
         return EXIT_FAILURE;
     }
-
-    // INIT PORT AND ACCEPT CONNECTIONS FROM ALL IPs
-    struct sockaddr_in server_addr;
-    // IP PROTOCOL
-    server_addr.sin_family = SOCKET_FAMILY;
-    // ACCEPT CONNECTIONS FROM EVERY IP
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    // LISTEN TO PORT
-    server_addr.sin_port = htons( port );
-    // BIND THE SOCKET TO THE PARAMETER
-    int result = bind(serverSocket, (struct sockaddr*)(&server_addr), sizeof(struct sockaddr_in));
-    if (result < 0 ) {
-        perror("Unable to bind server to socket!");
+    
+    // Create Socket with the stored information
+    serverSocket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (serverSocket < 0 ) {
+        perror("Can't create new socket!");
         return EXIT_FAILURE;
     }
+    // Bind the Server to the Socket
+    if (bind(serverSocket, res->ai_addr, res->ai_addrlen) == -1) {
+        perror("Can't bind the server to the socket!");
+        return EXIT_FAILURE;
+    }
+    // Free Memory
+    freeaddrinfo(res);
 
-    // START LISTENING TO SOCKET
-    listen(serverSocket, SERVER_QUEUE_SIZE);
-
+    // Start Listening to the Socket    
+    listen(serverSocket, SOMAXCONN);
+    
     return EXIT_SUCCESS;
 }
 
 void serverLoop(void) {
-    // INFORMATION ABOUT THE CLIENT
-    // Selber speicher
+
     int clientSocket;
     socklen_t len = sizeof(struct sockaddr_in);
 
-    // SERVER LOOP
+    // Main loop
     while (serverIsRunning) {
+        // Struct for storing information about the client
         struct sockaddr_in *clientInformation = malloc(sizeof (struct sockaddr_in));
         if (clientInformation == NULL) {
             perror("Not enough memory!");
