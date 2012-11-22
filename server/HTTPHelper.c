@@ -41,7 +41,7 @@ bool isGETRequest(char *request, int length) {
 bool isValidGET(char *request) {
 
     regex_t regex;
-    int regRes = regcomp(&regex, "GET /\\S* HTTP/1.[01].*", 0);
+    int regRes = regcomp(&regex, "GET /\\S* HTTP/1\\.[01].*", 0);
     if (regRes != 0) {
         perror("Error while compiling GET Regex!");
         return false;

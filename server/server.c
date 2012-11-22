@@ -129,29 +129,32 @@ int createConnection(int port) {
 
 void serverLoop(void) {
     // INFORMATION ABOUT THE CLIENT
-    struct sockaddr_in client;
+    // Selber speicher
     int clientSocket;
-    socklen_t len = sizeof(client);
+    socklen_t len = sizeof(struct sockaddr_in);
 
     // SERVER LOOP
     while (serverIsRunning) {
+        struct sockaddr_in *clientInformation = malloc(sizeof (struct sockaddr_in));
+        if (clientInformation == NULL) {
+            perror("Not enough memory!");
+            break;
+        }
         // BLOCKS UNTIL A CONNECTION IS INSIDE THE QUEUE
-        clientSocket = accept( serverSocket, (struct sockaddr*)(&client), &len);
-        puts("Creating new client...");
+        clientSocket = accept( serverSocket, (struct sockaddr*)(clientInformation), &len);
         if (clientSocket < 0 ) {
             perror("Can't accept a new client!");
             continue;
         }
         // Create new client and start handeling it
-        addClient(clientSocket, &client);
+        addClient(clientSocket, clientInformation);
     }
 
     stopServer(EXIT_SUCCESS);
 }
 
 int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
-    struct clientData *clientData;
-    clientData = malloc(sizeof(struct clientData));
+    struct clientData *clientData = malloc(sizeof (struct clientData));
     // not enought memory
     if (clientData == NULL) {
         perror("Can't allocate memory for the clientData struct!");
@@ -215,6 +218,7 @@ void *handleClient(void *arg) {
         if (bytes_read == 0)
             break;
         bytes_read_offset += bytes_read;
+        clientData->inBuffer[bytes_read_offset] = '\0';
 
         // HTTP Request must end with an \r\n\r\n
         if (!isHTTPRequest(clientData->inBuffer, bytes_read_offset)) {
@@ -263,8 +267,9 @@ void *handleClient(void *arg) {
                     free(fStat);
                     printf("Finished sending file %s\n",fileBuffer);
                     // Disconnect client
-                    clientData->isConnected = false;
+                 
                 }
+                clientData->isConnected = false;
             }
             // Send Error 400 - Bad request
             else {
