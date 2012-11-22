@@ -20,14 +20,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <limits.h>
 #include <signal.h>
 
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/sendfile.h>
 #include <unistd.h>
 #include <netinet/in.h>
 
@@ -36,8 +34,6 @@
 #include "server.h"
 #include "clientData.h"
 #include "../network/network.h"
-#include "../common/linkedList.h"
-#include "../common/regexHelper.h"
 #include "HTTPHelper.h"
 
 int serverSocket;
