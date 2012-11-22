@@ -189,10 +189,9 @@ void *handleClient(void *arg) {
     while (clientData->isConnected) {
 
         if (bytes_read_offset >= OUT_BUFFER_SIZE) {
-            fprintf(stderr,"Offset: %d, Size: %d", bytes_read_offset, OUT_BUFFER_SIZE);
-            memset((clientData->inBuffer), 0 , OUT_BUFFER_SIZE);
+            memset((clientData->inBuffer), 0, OUT_BUFFER_SIZE);
             bytes_read_offset = 0;
-            sendError(413, clientData->clientSocket, clientData->outBuffer);
+            sendError(HTTP_ERROR_REQUEST_ENTITY_TOO_LARGE, clientData->clientSocket, clientData->outBuffer);
             perror("Error 413 Request Entity Too Large!");
         }
 
@@ -226,7 +225,7 @@ void *handleClient(void *arg) {
                 int file = open(fileBuffer, O_RDONLY);
                 // Send Error 404 - File Not Found
                 if (file < 0) {
-                    sendError(404, clientData->clientSocket, clientData->outBuffer);
+                    sendError(HTTP_ERROR_FILE_NOT_FOUND, clientData->clientSocket, clientData->outBuffer);
                     fprintf(stderr, "Error 404 - File Not Found: %s\n", fileBuffer);
                 }
                 // Transfer file
@@ -264,13 +263,13 @@ void *handleClient(void *arg) {
             }
             // Send Error 400 - Bad request
             else {
-                sendError(400, clientData->clientSocket, clientData->outBuffer);
+                sendError(HTTP_ERROR_BAD_REQUEST, clientData->clientSocket, clientData->outBuffer);
                 fprintf(stderr, "Error 400 - Bad request: %s\n", clientData->inBuffer);
             }
         }
         // Send Error 501 - Not implemented request
         else {
-            sendError(501, clientData->clientSocket, clientData->outBuffer);
+            sendError(HTTP_ERROR_NOT_IMPLEMENTED, clientData->clientSocket, clientData->outBuffer);
             fprintf(stderr, "Error 501 - Not implemented request : %s\n", clientData->inBuffer);
         }
     }

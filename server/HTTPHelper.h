@@ -17,6 +17,11 @@
  */
 #include <stdbool.h>
 
+#define HTTP_ERROR_BAD_REQUEST 400
+#define HTTP_ERROR_FILE_NOT_FOUND 404
+#define HTTP_ERROR_REQUEST_ENTITY_TOO_LARGE 413
+#define HTTP_ERROR_NOT_IMPLEMENTED 501
+
 bool isHTTPRequest(char *request, int length);
 
 bool isGETRequest(char *request, int length);

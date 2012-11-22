@@ -18,6 +18,8 @@
 
 #include "HTTPHelper.h"
 
+#include "../network/network.h"
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -126,21 +128,21 @@ void GETResponseHead(char *headBuffer, int contentLength) {
 void sendError(int errorCode, int dest, char *buffer) {
     memset(buffer, 0 , sizeof(buffer));
     switch(errorCode) {
-        case 400:
-            strcat(buffer, "HTTP/1.0 400 Bad Request");
+        case HTTP_ERROR_BAD_REQUEST:
+            strcat(buffer, "HTTP/1.0 400 - Bad Request\r\n\r\n");
             break;
-        case 404:
-            strcat(buffer, "HTTP/1.0 404 Not found");
+        case HTTP_ERROR_FILE_NOT_FOUND:
+            strcat(buffer, "HTTP/1.0 404 - File Not Found\r\n\r\n");
             break;
-        case 413:
-            strcat(buffer, "HTTP/1.0 413 Request Entity Too Large!");
+        case HTTP_ERROR_REQUEST_ENTITY_TOO_LARGE:
+            strcat(buffer, "HTTP/1.0 413 - Request Entity Too Large!\r\n\r\n");
             break;
-        case 501:
-            strcat(buffer, "HTTP/1.0 501 Not Implemented");
+        case HTTP_ERROR_NOT_IMPLEMENTED:
+            strcat(buffer, "HTTP/1.0 501 - Not Implemented\r\n\r\n");
             break;
         default:
             fprintf(stderr, "Unknown error code %d!\n", errorCode);
     }
-    strcat(buffer, "\r\n\r\n");
-    write(dest, buffer, strlen(buffer));
+    fprintf(stderr, "%s", buffer);
+    sendAll(dest, buffer, strlen(buffer));
 }
