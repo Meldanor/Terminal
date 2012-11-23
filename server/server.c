@@ -277,7 +277,6 @@ void *handleClient(void *arg) {
             fprintf(stderr, "Error 501 - Not implemented request : %s\n", clientData->inBuffer);
         }
     }
-    printf("Threadaddress: %p\n", clientData->thread);
     // CLOSE CONNECTION
     close(clientData->clientSocket);
     // Free Memory
