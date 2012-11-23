@@ -280,8 +280,8 @@ void *handleClient(void *arg) {
     // CLOSE CONNECTION
     close(clientData->clientSocket);
     // Free Memory
-    clearClient(clientData);
     clients[clientData->position] = NULL;
+    clearClient(clientData);
 
     puts("Client disconnected");
 
