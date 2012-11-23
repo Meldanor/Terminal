@@ -3,7 +3,7 @@ SERVER_VERSION = 1.1-SNAPSHOT
 SERVER_DIR = server/
 SERVER_FILES = *.c
 
-COMMON_FILES = network/* common/*
+COMMON_FILES = network/*
 
 OUT_DIR = ./bin
 
