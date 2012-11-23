@@ -23,11 +23,11 @@
 #include <string.h>
 
 /* function to encapsulate the necessary multithreaded information */
-int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *clientInformation) {
+int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *connectionInformation) {
     // assign values
     clientData->isConnected = true;
     clientData->clientSocket = clientSocket;
-    clientData->clientInformation = clientInformation;
+    clientData->connectionInformation = connectionInformation;
 
     // create buffer and assign values
     char *bufferPointer;
@@ -69,6 +69,14 @@ void clearClient(struct clientData *clientData) {
     // free outBuffer
     if (clientData->outBuffer != NULL) {
         free(clientData->outBuffer);
+    }
+    // free thread memory
+    if (clientData->thread != NULL) {
+        free(clientData->thread);
+    }
+    // free information about the client connection
+    if (clientData->connectionInformation != NULL) {
+        free(clientData->connectionInformation);
     }
     // free the struct itself
     free(clientData);

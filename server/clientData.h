@@ -25,13 +25,13 @@
 struct clientData {
     int clientSocket;
     bool isConnected;
-    struct sockaddr_in *clientInformation;
+    struct sockaddr_in *connectionInformation;
     pthread_t *thread;
     char *inBuffer;
     char *outBuffer;
     int position;
 };
 
-int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *clientInformation);
+int getClientData(struct clientData *clientData, int clientSocket, struct sockaddr_in *connectionInformation);
 
 void clearClient(struct clientData *clientData);

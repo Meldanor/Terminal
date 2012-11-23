@@ -126,25 +126,25 @@ void serverLoop(void) {
     // Main loop
     while (serverIsRunning) {
         // Struct for storing information about the client
-        struct sockaddr_in *clientInformation = malloc(sizeof (struct sockaddr_in));
-        if (clientInformation == NULL) {
+        struct sockaddr_in *connectionInformation = malloc(sizeof (struct sockaddr_in));
+        if (connectionInformation == NULL) {
             perror("Not enough memory!");
             break;
         }
         // BLOCKS UNTIL A CONNECTION IS INSIDE THE QUEUE
-        clientSocket = accept( serverSocket, (struct sockaddr*)(clientInformation), &len);
+        clientSocket = accept( serverSocket, (struct sockaddr*)(connectionInformation), &len);
         if (clientSocket < 0 ) {
             perror("Can't accept a new client!");
             continue;
         }
         // Create new client and start handeling it
-        addClient(clientSocket, clientInformation);
+        addClient(clientSocket, connectionInformation);
     }
 
     stopServer(EXIT_SUCCESS);
 }
 
-int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
+int addClient(int clientSocket, struct sockaddr_in *connectionInformation) {
     struct clientData *clientData = malloc(sizeof (struct clientData));
     // not enought memory
     if (clientData == NULL) {
@@ -153,16 +153,20 @@ int addClient(int clientSocket, struct sockaddr_in *clientInformation) {
     }
     int result = 0;
     // create data for the thread
-    getClientData(clientData, clientSocket, clientInformation);
+    getClientData(clientData, clientSocket, connectionInformation);
 
     // Create thread
-    pthread_t thread;
-    result = pthread_create(&thread, NULL, &handleClient, clientData);
+    pthread_t *thread = malloc(sizeof(pthread_t));
+    if (thread == NULL) {
+        perror("Can't allocate memory for thread!");
+        return EXIT_FAILURE;
+    }
+    result = pthread_create(thread, NULL, &handleClient, clientData);
     if (result != 0) {
         perror("Can't create new thread for client!");
         return EXIT_FAILURE;
     }
-    clientData->thread = &thread;
+    clientData->thread = thread;
     
     // Add client to list
     int i;
@@ -273,7 +277,7 @@ void *handleClient(void *arg) {
             fprintf(stderr, "Error 501 - Not implemented request : %s\n", clientData->inBuffer);
         }
     }
-
+    printf("Threadaddress: %p\n", clientData->thread);
     // CLOSE CONNECTION
     close(clientData->clientSocket);
     // Free Memory
